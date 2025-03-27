@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thông tin cá nhân</title>
+    <link rel="icon" type="image/png" href="./assets/q3logo.png" />
+    <link href="./libs/materialize.min.css" rel="stylesheet" />
+    <!-- Custom Styles -->
+    <style>
+      body {
+        background-color: #faf2eb;
+      }
+      .container {
+        max-width: 600px;
+        margin-top: 90px;
+      }
+      .card {
+        padding: 20px;
+        border-radius: 12px;
+      }
+      .btn-primary {
+        background-color: #ff9800 !important;
+      }
+      .btn-secondary {
+        background-color: #757575 !important;
+      }
+      .loader {
+        display: none;
+        border: 4px solid #ffcc80;
+        border-top: 4px solid #ff9800;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: auto;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .input-field {
+        margin-top: 0px !important;
+      }
+      .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .toast-container {
+        position: fixed;
+        top: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2000;
+      }
+      .nav-bar {
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        z-index: 10;
+      }
+      .nav-bar a {
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body class="container">
+    <nav class="nav-bar" style="background-color: #ff9800">
+      <div
+        class="nav-wrapper"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        "
+      >
+        <ul class="left">
+          <li class="active"><a>Trainer</a></li>
+          <li id="goCalendar" style="display: none">
+            <a href="calendar.html">Calendar</a>
+          </li>
+        </ul>
+        <button
+          class="btn-small cyan waves-effect waves-light"
+          style="margin-right: 16px; border-radius: 4px"
+          onclick="logout()"
+        >
+          Log out
+        </button>
+      </div>
+    </nav>
+    <div class="card">
+      <h4 class="center-align" style="color: #ff9800">
+        Nhập thông tin cá nhân
+      </h4>
+      <form id="userInfoForm">
+        <label for="name">Tên</label>
+        <div class="input-field">
+          <input type="text" id="name" required />
+        </div>
+
+        <label for="email">Email</label>
+        <div class="input-field">
+          <input type="email" id="email" required readonly />
+        </div>
+
+        <label for="facebook">Facebook</label>
+        <div class="input-field">
+          <input type="text" id="facebook" required />
+        </div>
+
+        <label for="timezone">Chọn múi giờ</label>
+        <div class="input-field">
+          <select id="timezone" class="browser-default" required>
+            <option value="(GMT +10:00) Brisbane">(GMT +10:00) Brisbane</option>
+            <option value="(GMT +10:30) Adelaide">(GMT +10:30) Adelaide</option>
+            <option value="(GMT +11:00) Canberra">(GMT +11:00) Canberra</option>
+            <option value="(GMT +11:00) Melbourne">
+              (GMT +11:00) Melbourne
+            </option>
+            <option value="(GMT +11:00) Sydney">(GMT +11:00) Sydney</option>
+            <option value="(GMT +11:00) Hobart">(GMT +11:00) Hobart</option>
+            <option value="(GMT+7) Việt Nam">(GMT+7) Việt Nam</option>
+          </select>
+        </div>
+
+        <div class="center">
+          <button type="submit" class="btn btn-primary" id="btn-save">
+            Save & Next
+          </button>
+        </div>
+      </form>
+    </div>
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="preloader-wrapper big active">
+        <div class="spinner-layer spinner-orange-only">
+          <div class="circle-clipper left">
+            <div class="circle"></div>
+          </div>
+          <div class="gap-patch">
+            <div class="circle"></div>
+          </div>
+          <div class="circle-clipper right">
+            <div class="circle"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Materialize JS -->
+    <script src="./libs/materialize.min.js"></script>
+    <script src="./js/trainer.js"></script>
+  </body>
+</html>

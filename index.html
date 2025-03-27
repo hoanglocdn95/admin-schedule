@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="./assets/q3logo.png" />
+    <title>Đăng nhập</title>
+    <link href="./libs/materialize.min.css" rel="stylesheet" />
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        height: 100vh;
+        background-color: #faf2eb;
+        padding: 10px;
+      }
+      h3,
+      h4,
+      h5 {
+        margin: 0 0 8px;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        max-width: 550px;
+        max-height: 550px;
+        height: fit-content;
+        width: 100%;
+        margin-top: 40px;
+      }
+      .btn {
+        background-color: #ff9800;
+        width: 100%;
+      }
+      .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .toast-container {
+        position: fixed;
+        top: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2000;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h3 class="center">Q3 Language</h3>
+      <h4 class="center">Admin sắp xếp thời gian học</h4>
+      <hr
+        style="
+          width: calc(100% + 60px);
+          margin: 16px 0 16px -30px;
+          border: 1px solid#ff9800;
+        "
+      />
+
+      <div class="input-field">
+        <input type="email" id="emailInput" required />
+        <label for="emailInput">Nhập email của bạn</label>
+      </div>
+      <div class="input-field">
+        <input type="password" id="passwordInput" required />
+        <label for="passwordInput">Nhập mật khẩu</label>
+      </div>
+      <button class="btn waves-effect waves-light" onclick="login()">
+        Đăng nhập
+      </button>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="preloader-wrapper big active">
+        <div class="spinner-layer spinner-orange-only">
+          <div class="circle-clipper left">
+            <div class="circle"></div>
+          </div>
+          <div class="gap-patch">
+            <div class="circle"></div>
+          </div>
+          <div class="circle-clipper right">
+            <div class="circle"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./libs/materialize.min.js"></script>
+    <script src="./js/login.js"></script>
+  </body>
+</html>
