@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="./assets/q3logo.png" />
+    <title>Sắp xếp lịch học</title>
+    <link href="./libs/materialize.min.css" rel="stylesheet" />
+    <style>
+      p,
+      h4,
+      h5,
+      h6 {
+        margin: 0;
+        width: fit-content;
+      }
+      .calendar-container {
+        background-color: #faf2eb;
+        height: 100%;
+        min-height: 100vh;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid black;
+        text-align: center;
+        padding: 8px;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      tr > th:first-child,
+      tr > td:first-child {
+        position: sticky;
+        left: 0;
+      }
+      tr td {
+        background: #fff;
+      }
+      textarea {
+        width: 95%;
+        max-height: 75px;
+      }
+      .error {
+        border: 2px solid red;
+      }
+      .error-message {
+        color: red;
+        font-size: 16px;
+        margin: 0 20px;
+        padding-bottom: 20px;
+      }
+      .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .toast-container {
+        position: fixed;
+        top: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2000;
+      }
+      .th-day {
+        min-width: 130px;
+      }
+      .table-container {
+        width: calc(100% - 40px);
+        overflow-x: auto;
+        margin: 0 20px;
+        border: solid;
+      }
+      .title {
+        margin: 0 auto;
+        width: fit-content;
+        padding: 20px;
+      }
+      .guide {
+        margin: 0 20px 20px;
+      }
+      .guide p {
+        font-size: 16px;
+      }
+
+      .nav-bar {
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        z-index: 10;
+      }
+      .nav-bar a {
+        font-size: 20px;
+      }
+
+      .student-cell {
+        cursor: pointer;
+        position: relative;
+        display: inline-block;
+        padding: 8px;
+      }
+
+      .student-cell::after,
+      .student-cell::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(to right, #fe9801, #07bdd0);
+        bottom: 0;
+        left: 0;
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.4s ease-out;
+      }
+
+      .student-cell::before {
+        top: 0;
+        transform-origin: left;
+      }
+
+      .student-cell:hover {
+        background: #fe9801;
+        color: #ffffff;
+        font-weight: bold;
+        transition: 0.5s;
+      }
+
+      .student-cell:hover::after,
+      .student-cell:hover::before {
+        transform: scaleX(1);
+      }
+
+      /* .student-cell:hover {
+        cursor: pointer;
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+      }
+
+      .student-cell:hover::before {
+        opacity: 1;
+        transform: rotate(-45deg) translateY(100%);
+      } */
+    </style>
+  </head>
+  <body>
+    <nav class="nav-bar" style="background-color: #ff9800">
+      <div
+        class="nav-wrapper"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        "
+      >
+        <ul class="left">
+          <li id="navItem">
+            <a href="admin.html">Admin</a>
+          </li>
+          <li class="active">
+            <a>Calendar</a>
+          </li>
+        </ul>
+        <button
+          class="btn-small cyan waves-effect waves-light"
+          style="margin-right: 16px; border-radius: 4px"
+          onclick="logout()"
+        >
+          Log out
+        </button>
+      </div>
+    </nav>
+    <div class="calendar-container">
+      <div id="register-calendar-guide">
+        <h4 class="title" style="color: #ff9800; margin-top: 60px">
+          Sắp xếp lịch học
+        </h4>
+        <div class="guide">
+          <p>
+            Tất cả giờ được đăng ký của học viên đã được chuyển đổi theo múi giờ
+            <b>Adelaide</b> của bạn
+          </p>
+        </div>
+      </div>
+
+      <pre id="error-container" class="error-message"></pre>
+
+      <form id="scheduleForm">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr id="table-header">
+                <th style="min-width: 135px; background: #07bcd0">Tên</th>
+              </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+        <div id="btn-send" class="center" style="padding: 20px">
+          <button
+            type="button"
+            class="btn-floating btn-large cyan pulse"
+            onclick="submitSchedule()"
+          >
+            Gửi
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="preloader-wrapper big active">
+        <div class="spinner-layer spinner-orange-only">
+          <div class="circle-clipper left">
+            <div class="circle"></div>
+          </div>
+          <div class="gap-patch">
+            <div class="circle"></div>
+          </div>
+          <div class="circle-clipper right">
+            <div class="circle"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thẻ modal -->
+    <div id="studentModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4><span id="modal-name"></span> - <span id="modal-time"></span></h4>
+        </div>
+
+        <div class="modal-body">
+          <h5 id="modal-email"></h5>
+          <hr />
+          <div>
+            <h6>Lịch học</h6>
+            <div id="modal-schedule">
+              <!-- Các ô input thời gian sẽ được thêm vào đây bằng JS -->
+            </div>
+          </div>
+          <hr />
+          <select id="modal-trainer" class="browser-default">
+            <option value="" disabled selected>Chọn Trainer</option>
+          </select>
+          <label>Số khung giờ học trong ngày:</label>
+          <select class="browser-default">
+            <option value="1" selected>1 khung giờ</option>
+            <option value="2">2 khung giờ</option>
+          </select>
+          <div>
+            Từ
+            <input type="time" style="width: fit-content" />
+            đến
+            <input type="time" style="width: fit-content" />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat">
+          Đóng
+        </a>
+      </div>
+    </div>
+
+    <script src="./libs/materialize.min.js"></script>
+    <script src="./js/calendar.js"></script>
+  </body>
+</html>

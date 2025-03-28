@@ -1,17 +1,11 @@
 const ACCOUNT_API_URL =
-  "https://script.google.com/macros/s/AKfycbwhrXjVvSpS05ehLyHYs971_uRZS-rIav8W0P6TqP3cs5rigd4E-bIKnbCN-ACFxtsYrQ/exec";
+  "https://script.google.com/macros/s/AKfycbytD-SM2ZqlC_8ZealODSCynhWbauexL3JENPDczagcC_B5zcz2Epn8cOqxbQQ3w-Zijw/exec";
+
+const loadingOverlay = document.getElementById("loadingOverlay");
 
 async function login() {
   const email = document.getElementById("emailInput").value.trim();
   const password = document.getElementById("passwordInput").value.trim();
-  const userType = document.querySelector(
-    'input[name="userType"]:checked'
-  ).value;
-  const loadingOverlay = document.getElementById("loadingOverlay");
-  const redirectPage = {
-    student: "user.html",
-    trainer: "trainer.html",
-  };
 
   if (email === "" || password === "") {
     M.toast({
@@ -29,14 +23,17 @@ async function login() {
       method: "POST",
       redirect: "follow",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ type: "login", email, password, userType }),
+      body: JSON.stringify({
+        type: "login",
+        email,
+        password,
+        userType: "admin",
+      }),
     });
 
     const result = await response.json();
     const res = JSON.parse(result.message);
     const status = res.status;
-
-    loadingOverlay.style.display = "none";
 
     switch (status) {
       case "wrong_password":
@@ -60,7 +57,7 @@ async function login() {
           displayLength: 2000,
         });
         sessionStorage.setItem("user_email", email);
-        setTimeout(() => (window.location.href = redirectPage[userType]), 1000);
+        setTimeout(() => (window.location.href = "admin.html"), 1000);
         break;
       default:
         M.toast({
@@ -70,12 +67,13 @@ async function login() {
         });
     }
   } catch (error) {
-    loadingOverlay.style.display = "none";
     M.toast({
       html: "Lỗi kết nối!",
       classes: "red",
       displayLength: 2000,
     });
     console.error("Lỗi:", error);
+  } finally {
+    loadingOverlay.style.display = "none";
   }
 }

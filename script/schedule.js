@@ -243,7 +243,7 @@ function createSheetWithHeaders(ss, sheetName, monday, sunday, userType) {
   sheet.getRange(2, 1, 1, 10).setValue("");
 
   // Tạo tiêu đề cột
-  var headers = ["Buổi"];
+  var headers = ["Tên"];
   for (var d = new Date(monday); d <= sunday; d.setDate(d.getDate() + 1)) {
     var dayOfWeek = dayNames[d.getDay()]; // Lấy tên thứ trong tuần
     var formattedDate = Utilities.formatDate(
@@ -266,7 +266,6 @@ function createSheetWithHeaders(ss, sheetName, monday, sunday, userType) {
     .setVerticalAlignment("middle");
   headerRange.offset(0, 1).setBackground("#f2f2f2");
 
-  // Tạo hàng "Buổi sáng", "Buổi chiều", "Buổi tối"
   var periods = [
     "Sáng (8:00 - 12:00)*",
     "Chiều (12:00 - 17:00)",

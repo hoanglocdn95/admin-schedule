@@ -1,16 +1,16 @@
 const ACCOUNT_API_URL =
-  "https://script.google.com/macros/s/AKfycbwhrXjVvSpS05ehLyHYs971_uRZS-rIav8W0P6TqP3cs5rigd4E-bIKnbCN-ACFxtsYrQ/exec";
+  "https://script.google.com/macros/s/AKfycbytD-SM2ZqlC_8ZealODSCynhWbauexL3JENPDczagcC_B5zcz2Epn8cOqxbQQ3w-Zijw/exec";
+const loadingOverlay = document.getElementById("loadingOverlay");
 
 document.addEventListener("DOMContentLoaded", async function () {
   const emailField = document.getElementById("email");
   const storedEmail = sessionStorage.getItem("user_email");
   if (storedEmail) {
     emailField.value = storedEmail;
-    await fetchTrainerData(storedEmail);
+    await fetchAdminData(storedEmail);
   }
 
   const form = document.getElementById("userInfoForm");
-  const loadingOverlay = document.getElementById("loadingOverlay");
 
   form.addEventListener("submit", async function (event) {
     const userInStorage = JSON.parse(sessionStorage.getItem("user_info"));
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     event.preventDefault();
 
     const userData = {
-      type: "trainer_info",
+      type: "admin_info",
       name: document.getElementById("name").value || "",
       email: document.getElementById("email").value,
       facebook: document.getElementById("facebook").value || "",
@@ -40,7 +40,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       body: JSON.stringify(userData),
     })
       .then((response) => {
-        loadingOverlay.style.display = "none";
         M.toast({ html: "Thông tin đã được lưu!", classes: "green darken-1" });
         sessionStorage.setItem("user_info", JSON.stringify(userData));
         setTimeout(() => {
@@ -49,16 +48,18 @@ document.addEventListener("DOMContentLoaded", async function () {
       })
       .catch((error) => {
         console.error("Lỗi khi lưu dữ liệu:", error);
+      })
+      .finally(() => {
+        loadingOverlay.style.display = "none";
       });
   });
 });
 
-async function fetchTrainerData(email) {
-  const loadingOverlay = document.getElementById("loadingOverlay");
+async function fetchAdminData(email) {
   loadingOverlay.style.display = "flex";
   try {
     const response = await fetch(
-      `${ACCOUNT_API_URL}?type=get_trainer&email=${email}`,
+      `${ACCOUNT_API_URL}?type=get_admin&email=${email}`,
       {
         method: "GET",
         redirect: "follow",
@@ -79,7 +80,7 @@ async function fetchTrainerData(email) {
         document.getElementById("goCalendar").style.display = "list-item";
         sessionStorage.setItem(
           "user_info",
-          JSON.stringify({ ...data.user, type: "trainer_info" })
+          JSON.stringify({ ...data.user, type: "admin_info" })
         );
       }
 
@@ -87,9 +88,10 @@ async function fetchTrainerData(email) {
       document.getElementById("facebook").value = facebook || "";
       document.getElementById("timezone").value = timezone || "";
     }
-    loadingOverlay.style.display = "none";
   } catch (error) {
     console.error("Lỗi khi lấy dữ liệu:", error);
+  } finally {
+    loadingOverlay.style.display = "none";
   }
 }
 
