@@ -108,6 +108,7 @@
         position: relative;
         display: inline-block;
         padding: 8px;
+        width: 100%;
       }
 
       .student-cell::after,
@@ -115,7 +116,7 @@
         content: "";
         position: absolute;
         width: 100%;
-        height: 4px;
+        height: 6px;
         background: linear-gradient(to right, #fe9801, #07bdd0);
         bottom: 0;
         left: 0;
@@ -132,7 +133,7 @@
       .student-cell:hover {
         background: #fe9801;
         color: #ffffff;
-        font-weight: bold;
+        /* font-weight: bold; */
         transition: 0.5s;
       }
 
@@ -141,16 +142,10 @@
         transform: scaleX(1);
       }
 
-      /* .student-cell:hover {
-        cursor: pointer;
-        transform: scale(1.05);
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+      .choose-trainer {
+        width: fit-content;
+        display: inline-block !important;
       }
-
-      .student-cell:hover::before {
-        opacity: 1;
-        transform: rotate(-45deg) translateY(100%);
-      } */
     </style>
   </head>
   <body>
@@ -246,32 +241,33 @@
           <hr />
           <div>
             <h6>Lịch học</h6>
-            <div id="modal-schedule">
-              <!-- Các ô input thời gian sẽ được thêm vào đây bằng JS -->
-            </div>
+            <div id="modal-schedule"></div>
+            <button id="edit-schedule-btn">Edit</button>
           </div>
           <hr />
-          <select id="modal-trainer" class="browser-default">
-            <option value="" disabled selected>Chọn Trainer</option>
-          </select>
+
           <label>Số khung giờ học trong ngày:</label>
-          <select class="browser-default">
+          <select
+            id="session-quantity"
+            class="browser-default"
+            style="width: fit-content; display: inline-block"
+          >
             <option value="1" selected>1 khung giờ</option>
             <option value="2">2 khung giờ</option>
           </select>
-          <div>
-            Từ
-            <input type="time" style="width: fit-content" />
-            đến
-            <input type="time" style="width: fit-content" />
-          </div>
+          <div id="register-class"></div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <a href="#!" class="modal-close waves-effect waves-green btn-flat">
-          Đóng
-        </a>
+        <button type="button" class="btn-floating btn-large green">Save</button>
+        <button
+          type="button"
+          class="btn-floating btn-large red"
+          onclick="closeModal()"
+        >
+          Close
+        </button>
       </div>
     </div>
 
