@@ -183,7 +183,8 @@
         <div class="guide">
           <p>
             Tất cả giờ được đăng ký của học viên đã được chuyển đổi theo múi giờ
-            <b>Adelaide</b> của bạn
+            <b id="admin-timezone">Adelaide</b> của bạn. Nếu bạn muốn thay đổi
+            múi giờ, vui lòng trở lại tab Admin để cập nhật
           </p>
         </div>
       </div>
@@ -201,16 +202,53 @@
             <tbody id="table-body"></tbody>
           </table>
         </div>
-        <div id="btn-send" class="center" style="padding: 20px">
-          <button
-            type="button"
-            class="btn-floating btn-large cyan pulse"
-            onclick="submitSchedule()"
-          >
-            Gửi
-          </button>
-        </div>
+        <div id="btn-send" class="center" style="padding: 20px"></div>
       </form>
+    </div>
+
+    <!-- Thẻ modal -->
+    <div id="studentModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4><span id="modal-name"></span> - <span id="modal-time"></span></h4>
+        </div>
+
+        <div class="modal-body">
+          <h5 id="modal-email"></h5>
+          <hr />
+          <div>
+            <h6>Lịch học</h6>
+            <div id="modal-schedule"></div>
+            <button id="edit-schedule-btn">Edit</button>
+            <button id="save-schedule-btn">Save</button>
+          </div>
+          <hr />
+
+          <label>Số khung giờ học trong ngày:</label>
+          <select
+            id="session-quantity"
+            class="browser-default"
+            style="width: fit-content; display: inline-block"
+          >
+            <option value="" disabled selected>Chọn số khung giờ</option>
+            <option value="1">1 khung giờ</option>
+            <option value="2">2 khung giờ</option>
+            <option value="3">3 khung giờ</option>
+          </select>
+          <div id="register-class"></div>
+          <button id="save-classes-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn-floating btn-large red"
+          onclick="closeModal()"
+        >
+          Close
+        </button>
+      </div>
     </div>
 
     <div class="loading-overlay" id="loadingOverlay">
@@ -229,49 +267,8 @@
       </div>
     </div>
 
-    <!-- Thẻ modal -->
-    <div id="studentModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4><span id="modal-name"></span> - <span id="modal-time"></span></h4>
-        </div>
-
-        <div class="modal-body">
-          <h5 id="modal-email"></h5>
-          <hr />
-          <div>
-            <h6>Lịch học</h6>
-            <div id="modal-schedule"></div>
-            <button id="edit-schedule-btn">Edit</button>
-          </div>
-          <hr />
-
-          <label>Số khung giờ học trong ngày:</label>
-          <select
-            id="session-quantity"
-            class="browser-default"
-            style="width: fit-content; display: inline-block"
-          >
-            <option value="1" selected>1 khung giờ</option>
-            <option value="2">2 khung giờ</option>
-          </select>
-          <div id="register-class"></div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn-floating btn-large green">Save</button>
-        <button
-          type="button"
-          class="btn-floating btn-large red"
-          onclick="closeModal()"
-        >
-          Close
-        </button>
-      </div>
-    </div>
-
     <script src="./libs/materialize.min.js"></script>
+    <script src="./js/ultis.js"></script>
     <script src="./js/calendar.js"></script>
   </body>
 </html>

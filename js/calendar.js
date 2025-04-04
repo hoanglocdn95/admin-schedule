@@ -1,70 +1,4 @@
-const SCHEDULE_API_URL =
-  "https://script.google.com/macros/s/AKfycbz7yAeSFp7U_j18HpyHvXOu2QBeEJMf2V8-uc2jOcBgcY7LaUAjUS9HkS3zauDH9FoHtQ/exec";
-const ACCOUNT_API_URL =
-  "https://script.google.com/macros/s/AKfycbytD-SM2ZqlC_8ZealODSCynhWbauexL3JENPDczagcC_B5zcz2Epn8cOqxbQQ3w-Zijw/exec";
-
-const REMAIN_TIME_TO_EDIT = 5;
-
-let studentData = [];
-let trainerData = [];
-
-let studentCalendar = {};
-let trainerCalendar = {};
-
-const dayOfCurrentWeek = [];
-
-let scheduleQuantity = 1;
-
-let currentScheduledData = Array.from({ length: 3 }, () => Array(7).fill(""));
-
-const useInfo = JSON.parse(sessionStorage.getItem("user_info"));
-
-if (!sessionStorage.getItem("user_email")) {
-  window.location.href = "index.html";
-}
-if (!sessionStorage.getItem("user_info")) {
-  window.location.href = "admin.html";
-}
-
-function parseSchedule(allData) {
-  const result = {};
-
-  allData.forEach((dayData, sessionIndex) => {
-    dayData.forEach((entry, dayIndex) => {
-      if (!entry) return; // Bỏ qua nếu entry rỗng
-
-      const lines = entry.split("\n"); // Mỗi entry có thể có nhiều dòng
-      lines.forEach((line) => {
-        const match = line.match(
-          /^(.+?) - \(GMT [^)]*\) [^-]+- ([^ ]+) \((.+)\)$/
-        );
-        if (match) {
-          const name = match[1].trim();
-          const email = match[2].trim();
-          const time = match[3].trim();
-
-          if (!result[name]) {
-            result[name] = {
-              email,
-              times: Array(7)
-                .fill(null)
-                .map(() => []),
-            };
-          }
-
-          result[name].times[dayIndex].push(time);
-        }
-      });
-    });
-  });
-
-  return result;
-}
-
-function logout() {
-  sessionStorage.clear();
-  window.location.href = "index.html";
-}
+document.getElementById("admin-timezone").innerText = userInfo.timezone;
 
 function generateHeaders() {
   let today = new Date();
@@ -96,41 +30,30 @@ function generateHeaders() {
 
 function generateTableBody() {
   let tbody = document.getElementById("table-body");
-  // let periods = [
-  //   { label: "Sáng (8:00 - 12:00)*", start: 8, end: 12 },
-  //   { label: "Chiều (12:00 - 17:00)", start: 12, end: 17 },
-  //   { label: "Tối (17:00 - 23:00)", start: 17, end: 23 },
-  // ];
-
-  studentData = studentData.map((s) => {
-    if (studentCalendar[s.name]) {
-      studentCalendar[s.name] = { ...studentCalendar[s.name], ...s };
-      return {
-        ...s,
-        times: studentCalendar[s.name].times,
-        email: studentCalendar[s.name].email,
-      };
-    }
-    return s;
-  });
-  console.log(" initTableData ~ studentCalendar:", {
-    studentCalendar,
-    studentData,
-  });
+  tbody.innerHTML = "";
 
   studentData.forEach((stu, index) => {
     let tr = document.createElement("tr");
     let td = document.createElement("td");
 
-    td.textContent = stu.name;
-    td.style = "background: #07bcd0; font-weight: bold;";
+    td.innerHTML = `${stu.name} <br /> ${stu.timezone}`;
+    td.style = "background: #07bcd0; font-weight: bold; z-index: 1000;";
     tr.appendChild(td);
 
     for (let i = 0; i <= 6; i++) {
       let tdInput = document.createElement("td");
       tdInput.style.padding = 0;
       const timesString = stu.times ? stu.times[i].join(", ") : "";
-      // console.log(" studentData.forEach ~ stu:", stu);
+      const classesString = stu.classes
+        ? stu.classes[i]
+            .map((classItem, i) => {
+              return `
+          <p>${classItem.time} - ${classItem.trainer}</p>
+        `;
+            })
+            .join(", ")
+        : "";
+
       const htmlContent = timesString
         ? `
         <div class="student-cell"
@@ -144,7 +67,7 @@ function generateTableBody() {
           <p>${timesString}</p>
           <hr />
           <h6>Lịch học</h6>
-          <p>---</p>
+          ${classesString}
         </div>
       `
         : "";
@@ -156,33 +79,149 @@ function generateTableBody() {
 
     tbody.appendChild(tr);
   });
+
+  // Khởi tạo modal của Materialize
+  M.Modal.init(document.querySelectorAll(".modal"));
+
+  // Lắng nghe sự kiện click vào các phần tử có class student-cell
+  document.querySelectorAll(".student-cell").forEach((cell) => {
+    cell.onclick = function () {
+      const editScheduleBtn = document.querySelector("#edit-schedule-btn");
+      editScheduleBtn.innerText = "Edit";
+
+      const saveScheduleBtn = document.querySelector("#save-schedule-btn");
+      saveScheduleBtn.style.visibility = "hidden";
+
+      const saveClassesBtn = document.querySelector("#save-classes-btn");
+
+      const name = this.getAttribute("data-name");
+      const email = this.getAttribute("data-email");
+      const day = this.getAttribute("data-day");
+      const index = this.getAttribute("data-index");
+
+      document.getElementById("modal-name").innerText = name;
+      document.getElementById("modal-email").innerText = email;
+      document.getElementById("modal-time").innerText = dayOfCurrentWeek[day];
+
+      editScheduleBtn.onclick = function () {
+        if (this.innerText === "Edit") {
+          generateScheduleEdit(index, day);
+          saveScheduleBtn.style.visibility = "unset";
+          this.innerText = "Add";
+        } else {
+          addSchedule(index, day);
+        }
+      };
+
+      saveScheduleBtn.onclick = function () {
+        // M.Modal.getInstance(document.getElementById("studentModal")).close();
+
+        editScheduleBtn.innerText = "Edit";
+        saveScheduleBtn.style.visibility = "hidden";
+        saveStudentSchedule(index, day);
+      };
+
+      generateSchedule(index, day);
+
+      saveClassesBtn.onclick = function () {
+        saveClasses(index, day);
+      };
+
+      document
+        .querySelector("#session-quantity")
+        .addEventListener("change", function () {
+          const currentClasses = studentData[index].classes[day];
+          const tmp = Array(+this.value)
+            .fill({ time: "", trainer: "" })
+            .map((c, i) => {
+              if (currentClasses[i]) {
+                return { ...currentClasses[i] };
+              }
+              return c;
+            });
+
+          studentData[index].classes[day] = [...tmp];
+
+          generateRegisterClass(index, day);
+        });
+
+      M.Modal.getInstance(document.getElementById("studentModal")).open();
+    };
+  });
 }
 
-function generateRegisterClass(count) {
+function handleClassesTimeChange(value, index, day, indexTime, position) {
+  const currentValue = studentData[index].classes[day][indexTime].time;
+  if (position === "pre") {
+    studentData[index].classes[day][indexTime].time = currentValue
+      ? `${value}-${currentValue.split("-")[1]}`
+      : `${value}-`;
+  }
+  if (position === "post") {
+    studentData[index].classes[day][indexTime].time = currentValue
+      ? `${currentValue.split("-")[0]}-${value}`
+      : `-${value}`;
+  }
+}
+
+function handleClassesTrainerChange(value, index, day, indexTime) {
+  studentData[index].classes[day][indexTime].trainer = value;
+}
+
+function generateRegisterClass(index, day) {
   const registerClassContainer = document.getElementById("register-class");
   registerClassContainer.innerHTML = "";
 
-  Array(count)
-    .fill("")
-    .map((item) => {
-      const settingSession = `
+  studentData[index].classes[day].map((classItem, i) => {
+    const [start, end] = classItem.time ? classItem.time.split("-") : ["", ""];
+    const settingSession = `
               <div>
                 Từ
-                <input type="time" style="width: fit-content" />
+                <input type="time" style="width: fit-content" 
+                  value="${formatTime(start.trim())}"
+                  onchange="handleClassesTimeChange(this.value, ${index}, ${day}, ${i}, 'pre')"
+                />
                 đến
-                <input type="time" style="width: fit-content" />
-                <select class="browser-default choose-trainer">
-                  <option value="" disabled selected>Chọn Trainer</option>
+                <input type="time" style="width: fit-content" 
+                  value="${formatTime(end.trim())}"
+                  onchange="handleClassesTimeChange(this.value, ${index}, ${day}, ${i}, 'post')"
+                />
+                <select class="browser-default choose-trainer" onchange="handleClassesTrainerChange(this.value, ${index}, ${day}, ${i})">
+                  <option value="" disabled ${
+                    classItem.trainer ? "" : "selected"
+                  } selected>Chọn Trainer</option>
                   ${trainerData
                     .map((tr) => {
-                      return `<option value="${tr.name}">${tr.name}</option>`;
+                      return `<option value="${tr.name}" ${
+                        classItem.trainer === tr.name ? "selected" : ""
+                      }>${tr.name}</option>`;
                     })
                     .join("")}
                 </select>
               </div>
             `;
-      registerClassContainer.innerHTML += settingSession;
-    });
+    registerClassContainer.innerHTML += settingSession;
+  });
+}
+
+function deleteTime(index, day, indexTime) {
+  const temp = studentData[index].times[day];
+  studentData[index].times[day] = temp.filter((_, i) => i !== +indexTime);
+  generateScheduleEdit(index, day);
+}
+
+function handleScheduleTimeChange(value, index, day, indexTime, position) {
+  const currentValue = studentData[index].times[day][indexTime];
+  if (position === "pre") {
+    studentData[index].times[day][indexTime] = `${value}-${
+      currentValue.split("-")[1]
+    }`;
+  }
+  if (position === "post") {
+    studentData[index].times[day][indexTime] = `${
+      currentValue.split("-")[0]
+    }-${value}`;
+  }
 }
 
 function generateScheduleEdit(index, day) {
@@ -192,55 +231,62 @@ function generateScheduleEdit(index, day) {
   const leisureTime = studentData[index].times[day].map((t) => t.split(","));
 
   leisureTime.flat().forEach((time, i) => {
-    console.log(" leisureTime.flat ~ time:", time);
-    const [start, end] = time.split("-");
+    const [start, end] = time ? time.split("-") : ["", ""];
 
     const row = document.createElement("div");
     row.innerHTML = `
           <label>Khung giờ ${i + 1}:</label>
           Từ
-          <input type="time" style="width: fit-content" value="${start.trim()}"/>
+          <input type="time" style="width: fit-content" 
+            value="${formatTime(start.trim())}"
+            onchange="handleScheduleTimeChange(this.value, ${index}, ${day}, ${i}, 'pre')"
+          />
           đến
-          <input type="time" style="width: fit-content" value="${end.trim()}" />
-          <button>Delete</button>
+          <input type="time" style="width: fit-content" aa='1'  value="${formatTime(
+            end.trim()
+          )}" 
+            onchange="handleScheduleTimeChange(this.value, ${index}, ${day}, ${i}, 'post')"
+          />
+          <button 
+            data-index="${index}"
+            data-day="${day}"
+            data-timeIndex="${i}"
+            onclick="deleteTime(${index}, ${day}, ${i})"
+          >Delete</button>
         `;
     scheduleContainer.appendChild(row);
   });
 }
 
-function generateSchedule(index, day) {
-  const scheduleContainer = document.getElementById("modal-schedule");
-  scheduleContainer.innerHTML = "";
-
-  const leisureTime = studentData[index].times[day].map((t) => t.split(","));
-
-  scheduleQuantity = leisureTime.flat().length;
-
-  leisureTime.flat().forEach((time, i) => {
-    const [start, end] = time.split("-");
-
-    const row = document.createElement("div");
-    row.innerHTML = `
-          <label>Khung giờ ${i + 1}:</label>
-          <p>Từ <b>${start.trim()}</b> đến <b>${end.trim()}</b></p>
-        `;
-    scheduleContainer.appendChild(row);
-  });
-}
-
-function addSchedule() {
+function addSchedule(index, day) {
   const scheduleContainer = document.getElementById("modal-schedule");
 
-  scheduleQuantity += 1;
+  const leisureTime = studentData[index].times[day];
+
+  studentData[index].times[day].push("");
 
   const row = document.createElement("div");
   row.innerHTML = `
-          <label>Khung giờ ${scheduleQuantity}:</label>
+          <label>Khung giờ ${leisureTime.length}:</label>
           Từ
-          <input type="time" style="width: fit-content" />
+          <input type="time" style="width: fit-content" 
+            onchange="handleScheduleTimeChange(this.value, ${index}, ${day}, ${
+    leisureTime.length - 1
+  }, 'pre')"
+          
+          />
           đến
-          <input type="time" style="width: fit-content"  />
-          <button>Delete</button>
+          <input type="time" style="width: fit-content" 
+            onchange="handleScheduleTimeChange(this.value, ${index}, ${day}, ${
+    leisureTime.length - 1
+  }, 'post')"
+          />
+          <button 
+            data-index="${index}"
+            data-day="${day}"
+            data-timeIndex="${leisureTime.length - 1}"
+            onclick="deleteTime(${index}, ${day}, ${leisureTime.length - 1})"
+          >Delete</button>
         `;
   scheduleContainer.appendChild(row);
 }
@@ -251,120 +297,174 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   await Promise.all([getAllUser(), getStudentCalendar(), getTrainerCalendar()]);
 
+  studentData = studentData.map((s) => {
+    if (studentCalendar[s.name]) {
+      studentCalendar[s.name] = { ...studentCalendar[s.name], ...s };
+      return {
+        ...s,
+        times: studentCalendar[s.name].times.map((day) =>
+          day.map((timeRange) =>
+            convertTimeByTimezone(timeRange, s.timezone, userInfo.timezone)
+          )
+        ),
+        email: studentCalendar[s.name].email,
+        classes: Array(7).fill([{ time: "", trainer: "" }]),
+      };
+    }
+    return s;
+  });
+
   generateHeaders();
   generateTableBody();
-
-  // Khởi tạo modal của Materialize
-  M.Modal.init(document.querySelectorAll(".modal"));
-
-  // Lắng nghe sự kiện click vào các phần tử có class student-cell
-  document.querySelectorAll(".student-cell").forEach((cell) => {
-    cell.addEventListener("click", function () {
-      const name = this.getAttribute("data-name");
-      const email = this.getAttribute("data-email");
-      const day = this.getAttribute("data-day");
-      const index = this.getAttribute("data-index");
-
-      document.getElementById("modal-name").innerText = name;
-      document.getElementById("modal-email").innerText = email;
-      document.getElementById("modal-time").innerText = dayOfCurrentWeek[day];
-
-      document
-        .querySelector("#edit-schedule-btn")
-        .addEventListener("click", function () {
-          console.log(" this:", this.innerText);
-          if (this.innerText === "Edit") {
-            generateScheduleEdit(index, day);
-            this.innerText = "Add";
-          } else {
-            addSchedule();
-          }
-        });
-
-      generateSchedule(index, day);
-
-      generateRegisterClass(1);
-
-      document
-        .querySelector("#session-quantity")
-        .addEventListener("change", function () {
-          generateRegisterClass(+this.value);
-        });
-
-      M.Modal.getInstance(document.getElementById("studentModal")).open();
-    });
-  });
 
   loadingOverlay.style.display = "none";
 });
 
-function submitSchedule() {
-  const tableData = [];
-  document.querySelectorAll("tbody tr").forEach((row) => {
-    const rowData = [];
-    row.querySelectorAll("textarea").forEach((textarea) => {
-      rowData.push(textarea.value.trim());
-    });
-    tableData.push(rowData);
-  });
-
-  sessionStorage.setItem("scheduleData", JSON.stringify(tableData));
-  window.location.href = "confirm.html";
-}
-
-const getStudentCalendar = async () => {
-  await fetch(`${SCHEDULE_API_URL}?type=get_calendar`, {
-    redirect: "follow",
-    method: "GET",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-  })
-    .then(async (response) => {
-      const res = await response.json();
-      if (res.success) {
-        studentCalendar = parseSchedule(res.data);
-      }
-    })
-    .catch((error) => {
-      console.error("Lỗi khi lấy dữ liệu:", error);
-    });
-};
-
-const getTrainerCalendar = async () => {
-  await fetch(`${SCHEDULE_API_URL}?type=get_trainer_calendar`, {
-    redirect: "follow",
-    method: "GET",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-  })
-    .then(async (response) => {
-      const res = await response.json();
-      if (res.success) {
-        trainerCalendar = parseSchedule(res.data);
-        console.log(" .then ~ trainerCalendar:", trainerCalendar);
-      }
-    })
-    .catch((error) => {
-      console.error("Lỗi khi lấy dữ liệu:", error);
-    });
-};
-
-const getAllUser = async () => {
-  await fetch(`${ACCOUNT_API_URL}?type=get_all_user`, {
-    method: "GET",
-    redirect: "follow",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-  })
-    .then(async (response) => {
-      const data = await response.json();
-      if (data.success) {
-        if (data.student) studentData = data.student;
-        if (data.trainer) trainerData = data.trainer;
-      }
-    })
-    .catch((error) => {
-      console.error("Lỗi khi lấy dữ liệu:", error);
-    });
-};
-
 const closeModal = () => {
   M.Modal.getInstance(document.getElementById("studentModal")).close();
 };
+
+const saveClasses = (index, day) => {
+  // const timezone = studentData[index].timezone;
+  // const name = studentData[index].name;
+  // const email = studentData[index].email;
+  // const output = convertSchedule(studentData[index].times);
+
+  const updatedSchedule = convertStudentData(studentData);
+
+  loadingOverlay.style.display = "flex";
+
+  fetch(ADMIN_API_URL, {
+    redirect: "follow",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    method: "POST",
+    body: JSON.stringify({
+      scheduledData: updatedSchedule,
+      type: "handle_student_schedule",
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      M.toast({ html: "Dữ liệu đã được lưu!", classes: "green darken-1" });
+      setTimeout(() => {
+        generateTableBody();
+      }, 1000);
+    })
+    .catch((error) => {
+      console.error("error:", error);
+    })
+    .finally(() => {
+      loadingOverlay.style.display = "none";
+    });
+};
+
+function saveStudentSchedule(index, day) {
+  const isTrainer = false;
+  const timezone = studentData[index].timezone;
+  const name = studentData[index].name;
+  const email = studentData[index].email;
+  const output = convertSchedule(studentData[index].times);
+
+  const updatedSchedule = addUserInfoToSchedule(output, email, name, timezone);
+
+  loadingOverlay.style.display = "flex";
+
+  fetch(SCHEDULE_API_URL, {
+    redirect: "follow",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    method: "POST",
+    body: JSON.stringify({
+      scheduledData: updatedSchedule,
+      timezone,
+      type: isTrainer ? "handle_trainer_calendar" : "handle_student_calendar",
+      currentEmail: email,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      M.toast({
+        html: `Lịch rảnh của ${name} đã được lưu!`,
+        classes: "green darken-1",
+      });
+      generateTableBody();
+
+      generateSchedule(index, day);
+    })
+    .catch((error) => {
+      console.error("error:", error);
+    })
+    .finally(() => {
+      loadingOverlay.style.display = "none";
+    });
+}
+
+function convertSchedule(inputArray) {
+  let periods = [
+    { label: "Sáng (8:00 - 12:00)*", start: 8, end: 12 },
+    { label: "Chiều (12:00 - 17:00)", start: 12, end: 17 },
+    { label: "Tối (17:00 - 23:00)", start: 17, end: 23 },
+  ];
+
+  // Tạo output với 3 phần tử (Sáng, Chiều, Tối), mỗi phần tử có 7 chuỗi tương ứng 7 ngày
+  let output = Array.from({ length: 3 }, () => Array(7).fill(""));
+
+  // Duyệt từng ngày trong tuần
+  inputArray.forEach((dayArray, dayIndex) => {
+    // Duyệt từng khoảng thời gian trong ngày đó
+    dayArray.forEach((timeRange) => {
+      let match = timeRange.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+      if (match) {
+        let startHour = parseInt(match[1], 10);
+        let endHour = parseInt(match[3], 10);
+
+        // Phân loại vào các khoảng sáng, chiều, tối
+        periods.forEach((period, periodIndex) => {
+          if (
+            (startHour < period.end && endHour > period.start) || // Trường hợp giao nhau
+            (startHour >= period.start && endHour <= period.end) // Trường hợp nằm trọn
+          ) {
+            if (output[periodIndex][dayIndex]) {
+              output[periodIndex][dayIndex] += ", " + timeRange;
+            } else {
+              output[periodIndex][dayIndex] = timeRange;
+            }
+          }
+        });
+      }
+    });
+  });
+
+  return output;
+}
+
+function convertStudentData(studentData) {
+  return studentData.map((student) => {
+    const formattedClasses = student.classes
+      ? student.classes.map((dayClasses) => {
+          return dayClasses
+            .map((c) =>
+              c.time && c.trainer
+                ? `${convertTimeByTimezone(
+                    c.time,
+                    userInfo.timezone,
+                    student.timezone
+                  )} (${c.trainer})`
+                : ""
+            )
+            .filter((i) => i)
+            .join("\n");
+        })
+      : Array(7).fill("");
+
+    return [
+      student.name || "",
+      student.timezone || "",
+      student.email || "",
+      student.facebook || "",
+      "", // index 4: zoomNotes (chưa có dữ liệu)
+      "", // index 5: status (chưa có dữ liệu)
+      "", // index 6: note (chưa có dữ liệu)
+      ...formattedClasses,
+    ];
+  });
+}

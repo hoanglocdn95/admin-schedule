@@ -1,19 +1,3 @@
-const sheetInfoName = {
-  student: "User_Information",
-  trainer: "Trainer_Information",
-};
-
-const firstColColor = {
-  student: {
-    bg: "#07bdd0",
-    text: "#000000",
-  },
-  trainer: {
-    bg: "#ff9700",
-    text: "#ffffff",
-  },
-};
-
 const formatDate = (date) =>
   Utilities.formatDate(
     date,
