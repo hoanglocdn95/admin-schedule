@@ -103,6 +103,15 @@ function generateTableBody() {
       document.getElementById("modal-email").innerText = email;
       document.getElementById("modal-time").innerText = dayOfCurrentWeek[day];
 
+      document.getElementById("status").onchange = function () {
+        studentData[index].status = this.value;
+      };
+      document.getElementById("adminNote").onchange = function () {
+        studentData[index].adminNote = this.value;
+      };
+
+      generateSchedule(index, day);
+
       editScheduleBtn.onclick = function () {
         if (this.innerText === "Edit") {
           generateScheduleEdit(index, day);
@@ -114,14 +123,10 @@ function generateTableBody() {
       };
 
       saveScheduleBtn.onclick = function () {
-        // M.Modal.getInstance(document.getElementById("studentModal")).close();
-
         editScheduleBtn.innerText = "Edit";
         saveScheduleBtn.style.visibility = "hidden";
         saveStudentSchedule(index, day);
       };
-
-      generateSchedule(index, day);
 
       saveClassesBtn.onclick = function () {
         saveClasses(index, day);
@@ -309,6 +314,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         ),
         email: studentCalendar[s.name].email,
         classes: Array(7).fill([{ time: "", trainer: "" }]),
+        status: "",
+        adminNote: "",
       };
     }
     return s;
@@ -439,6 +446,7 @@ function convertSchedule(inputArray) {
 
 function convertStudentData(studentData) {
   return studentData.map((student) => {
+    console.log(" returnstudentData.map ~ student:", student);
     const formattedClasses = student.classes
       ? student.classes.map((dayClasses) => {
           return dayClasses
@@ -461,9 +469,9 @@ function convertStudentData(studentData) {
       student.timezone || "",
       student.email || "",
       student.facebook || "",
-      "", // index 4: zoomNotes (chưa có dữ liệu)
-      "", // index 5: status (chưa có dữ liệu)
-      "", // index 6: note (chưa có dữ liệu)
+      `${student.pteClass} - ${student.name} (Class)`,
+      student.status,
+      student.adminNote,
       ...formattedClasses,
     ];
   });

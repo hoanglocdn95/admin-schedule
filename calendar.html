@@ -63,7 +63,7 @@
         background: rgba(0, 0, 0, 0.5);
         justify-content: center;
         align-items: center;
-        z-index: 1000;
+        z-index: 1010;
       }
       .toast-container {
         position: fixed;
@@ -146,6 +146,10 @@
         width: fit-content;
         display: inline-block !important;
       }
+
+      .input-field {
+        margin: 0px !important;
+      }
     </style>
   </head>
   <body>
@@ -207,7 +211,7 @@
     </div>
 
     <!-- Thẻ modal -->
-    <div id="studentModal" class="modal">
+    <div id="studentModal" class="modal" style="width: 800px">
       <div class="modal-content">
         <div class="modal-header">
           <h4><span id="modal-name"></span> - <span id="modal-time"></span></h4>
@@ -223,6 +227,22 @@
             <button id="save-schedule-btn">Save</button>
           </div>
           <hr />
+
+          <label for="status">Trạng thái</label>
+          <div class="input-field" style="width: fit-content">
+            <select id="status" class="browser-default">
+              <option value="Chờ xác nhận lịch rảnh">Chờ lịch rảnh</option>
+              <option value="Chờ xác nhận lịch học">
+                Chờ xác nhận lịch học
+              </option>
+              <option value="Đã gửi link zoom">Đã gửi link zoom</option>
+            </select>
+          </div>
+
+          <label for="adminNote">Ghi chú</label>
+          <div class="input-field">
+            <textarea id="adminNote"></textarea>
+          </div>
 
           <label>Số khung giờ học trong ngày:</label>
           <select

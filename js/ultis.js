@@ -1,5 +1,5 @@
 const SCHEDULE_API_URL =
-  "https://script.google.com/macros/s/AKfycbwJGUpRLZIJkcg1ovZZ-qKIr2THnqMIwAQKD_sX05e3jcSSZISJBysr3NpCQYw4l6GdMg/exec";
+  "https://script.google.com/macros/s/AKfycbxe7uLlocVF5OLFdf4AA2nA8IPN8NGnwQMCF-WC8aO7HV2mXNzZj--hn30cXwyhA7QMDQ/exec";
 
 const ACCOUNT_API_URL =
   "https://script.google.com/macros/s/AKfycbxa7-dhPgo48Q3eVKnQjQNKI8oi4ykDfnTzi9hQDSfhGk2SrMBimc1yagzxXLULNs7tYQ/exec";
