@@ -37,7 +37,7 @@ function generateTableBody() {
     let td = document.createElement("td");
 
     td.innerHTML = `${stu.name} <br /> ${stu.timezone}`;
-    td.style = "background: #07bcd0; font-weight: bold; z-index: 1000;";
+    td.style = "background: #07bcd0; font-weight: bold; z-index: 1;";
     tr.appendChild(td);
 
     for (let i = 0; i <= 6; i++) {
@@ -93,6 +93,8 @@ function generateTableBody() {
       saveScheduleBtn.style.visibility = "hidden";
 
       const saveClassesBtn = document.querySelector("#save-classes-btn");
+      const statusElm = document.querySelector("#status");
+      const adminNoteElm = document.querySelector("#adminNote");
 
       const name = this.getAttribute("data-name");
       const email = this.getAttribute("data-email");
@@ -103,10 +105,17 @@ function generateTableBody() {
       document.getElementById("modal-email").innerText = email;
       document.getElementById("modal-time").innerText = dayOfCurrentWeek[day];
 
-      document.getElementById("status").onchange = function () {
+      statusElm.value = studentData[index].status;
+      adminNoteElm.value = studentData[index].adminNote;
+      console.log(
+        " document.querySelectorAll ~ studentData[index]:",
+        studentData[index]
+      );
+
+      statusElm.onchange = function () {
         studentData[index].status = this.value;
       };
-      document.getElementById("adminNote").onchange = function () {
+      adminNoteElm.onchange = function () {
         studentData[index].adminNote = this.value;
       };
 

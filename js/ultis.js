@@ -1,11 +1,11 @@
 const SCHEDULE_API_URL =
-  "https://script.google.com/macros/s/AKfycbxe7uLlocVF5OLFdf4AA2nA8IPN8NGnwQMCF-WC8aO7HV2mXNzZj--hn30cXwyhA7QMDQ/exec";
+  "https://script.google.com/macros/s/AKfycbygPNRd6DmfDaXSE5ruZSz4UwQ3zEwAUp8sw7K4CqDZUhS7Ff8h_sxvqbGKrDuo9Qc4Xw/exec";
 
 const ACCOUNT_API_URL =
   "https://script.google.com/macros/s/AKfycbxa7-dhPgo48Q3eVKnQjQNKI8oi4ykDfnTzi9hQDSfhGk2SrMBimc1yagzxXLULNs7tYQ/exec";
 
 const ADMIN_API_URL =
-  "https://script.google.com/macros/s/AKfycbyujQsJ__ImSu_OfNCCQVwZ-Hqw83bSwXsL0C52rjvJ9jfvvTCQ3KzJ61Beqiz1eUN2pw/exec";
+  "https://script.google.com/macros/s/AKfycbwkRkoAJ8bVH-tkWWpyuV1CZpDTJsHs-ZwOld0hj8J1HWC-zUjeobTTPxMsa9F_ChVAiA/exec";
 
 const REMAIN_TIME_TO_EDIT = 5;
 
