@@ -1,11 +1,11 @@
 const SCHEDULE_API_URL =
-  "https://script.google.com/macros/s/AKfycbygPNRd6DmfDaXSE5ruZSz4UwQ3zEwAUp8sw7K4CqDZUhS7Ff8h_sxvqbGKrDuo9Qc4Xw/exec";
+  "https://script.google.com/macros/s/AKfycbwtILUETUz9y88i18G0vVdSuS0WtYZnq4P-oP7C3HrtJi_v2SoOU5fy3khec_kL2p38xg/exec";
 
 const ACCOUNT_API_URL =
   "https://script.google.com/macros/s/AKfycbxa7-dhPgo48Q3eVKnQjQNKI8oi4ykDfnTzi9hQDSfhGk2SrMBimc1yagzxXLULNs7tYQ/exec";
 
 const ADMIN_API_URL =
-  "https://script.google.com/macros/s/AKfycbwkRkoAJ8bVH-tkWWpyuV1CZpDTJsHs-ZwOld0hj8J1HWC-zUjeobTTPxMsa9F_ChVAiA/exec";
+  "https://script.google.com/macros/s/AKfycbwMJ2HwNzTZtaAatVA4Vu_pyyw4Iz_w1fu-GCyXqsDaXGrN4FG7toEiXWOiH0SphNqowA/exec";
 
 const REMAIN_TIME_TO_EDIT = 5;
 
@@ -14,6 +14,8 @@ let trainerData = [];
 
 let studentCalendar = {};
 let trainerCalendar = {};
+
+let scheduleSheetData = [];
 
 const dayOfCurrentWeek = [];
 
@@ -203,3 +205,20 @@ const convertTimeByTimezone = (timeRange, originTimezone, targetTimezone) => {
 
   return convertTimeRange(timeRange, offsetDiff);
 };
+
+function parseTimeTrainerString(input) {
+  const lines = input.split("\n");
+  const result = [];
+
+  lines.forEach((line) => {
+    const match = line.match(/^(.+?)\s*\((.+)\)$/);
+    if (match) {
+      result.push({
+        time: match[1].trim(),
+        trainer: match[2].trim(),
+      });
+    }
+  });
+
+  return result;
+}

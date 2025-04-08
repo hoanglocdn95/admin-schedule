@@ -51,7 +51,7 @@ function generateTableBody() {
           <p>${classItem.time} - ${classItem.trainer}</p>
         `;
             })
-            .join(", ")
+            .join("")
         : "";
 
       const htmlContent = timesString
@@ -107,10 +107,6 @@ function generateTableBody() {
 
       statusElm.value = studentData[index].status;
       adminNoteElm.value = studentData[index].adminNote;
-      console.log(
-        " document.querySelectorAll ~ studentData[index]:",
-        studentData[index]
-      );
 
       statusElm.onchange = function () {
         studentData[index].status = this.value;
@@ -141,6 +137,8 @@ function generateTableBody() {
         saveClasses(index, day);
       };
 
+      generateRegisterClass(index, day);
+
       document
         .querySelector("#session-quantity")
         .addEventListener("change", function () {
@@ -164,7 +162,31 @@ function generateTableBody() {
   });
 }
 
-function handleClassesTimeChange(value, index, day, indexTime, position) {
+function handleClassesTimeChange(inputEl, index, day, indexTime, position) {
+  const value = inputEl.value;
+  const [hour, minute] = value.split(":").map(Number);
+
+  let roundedMinute = Math.round(minute / 15) * 15;
+  let adjustedHour = hour;
+
+  if (roundedMinute === 60) {
+    roundedMinute = 0;
+    adjustedHour += 1;
+  }
+
+  if (minute % 15 !== 0) {
+    M.toast({
+      html: "Chỉ được chọn số phút là bội số của 15",
+      classes: "red",
+    });
+
+    const formattedTime = `${String(adjustedHour).padStart(2, "0")}:${String(
+      roundedMinute
+    ).padStart(2, "0")}`;
+    inputEl.value = formattedTime;
+    return;
+  }
+
   const currentValue = studentData[index].classes[day][indexTime].time;
   if (position === "pre") {
     studentData[index].classes[day][indexTime].time = currentValue
@@ -191,14 +213,14 @@ function generateRegisterClass(index, day) {
     const settingSession = `
               <div>
                 Từ
-                <input type="time" style="width: fit-content" 
+                <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00" 
                   value="${formatTime(start.trim())}"
-                  onchange="handleClassesTimeChange(this.value, ${index}, ${day}, ${i}, 'pre')"
+                  onchange="handleClassesTimeChange(this, ${index}, ${day}, ${i}, 'pre')"
                 />
                 đến
-                <input type="time" style="width: fit-content" 
+                <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00" 
                   value="${formatTime(end.trim())}"
-                  onchange="handleClassesTimeChange(this.value, ${index}, ${day}, ${i}, 'post')"
+                  onchange="handleClassesTimeChange(this, ${index}, ${day}, ${i}, 'post')"
                 />
                 <select class="browser-default choose-trainer" onchange="handleClassesTrainerChange(this.value, ${index}, ${day}, ${i})">
                   <option value="" disabled ${
@@ -224,7 +246,31 @@ function deleteTime(index, day, indexTime) {
   generateScheduleEdit(index, day);
 }
 
-function handleScheduleTimeChange(value, index, day, indexTime, position) {
+function handleScheduleTimeChange(inputEl, index, day, indexTime, position) {
+  const value = inputEl.value;
+  const [hour, minute] = value.split(":").map(Number);
+
+  let roundedMinute = Math.round(minute / 15) * 15;
+  let adjustedHour = hour;
+
+  if (roundedMinute === 60) {
+    roundedMinute = 0;
+    adjustedHour += 1;
+  }
+
+  if (minute % 15 !== 0) {
+    M.toast({
+      html: "Chỉ được chọn số phút là bội số của 15",
+      classes: "red",
+    });
+
+    const formattedTime = `${String(adjustedHour).padStart(2, "0")}:${String(
+      roundedMinute
+    ).padStart(2, "0")}`;
+    inputEl.value = formattedTime;
+    return;
+  }
+
   const currentValue = studentData[index].times[day][indexTime];
   if (position === "pre") {
     studentData[index].times[day][indexTime] = `${value}-${
@@ -251,17 +297,16 @@ function generateScheduleEdit(index, day) {
     row.innerHTML = `
           <label>Khung giờ ${i + 1}:</label>
           Từ
-          <input type="time" style="width: fit-content" 
+          <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00"
             value="${formatTime(start.trim())}"
-            onchange="handleScheduleTimeChange(this.value, ${index}, ${day}, ${i}, 'pre')"
+            onchange="handleScheduleTimeChange(this, ${index}, ${day}, ${i}, 'pre')"
           />
           đến
-          <input type="time" style="width: fit-content" aa='1'  value="${formatTime(
-            end.trim()
-          )}" 
-            onchange="handleScheduleTimeChange(this.value, ${index}, ${day}, ${i}, 'post')"
+          <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00"
+            value="${formatTime(end.trim())}"
+            onchange="handleScheduleTimeChange(this, ${index}, ${day}, ${i}, 'post')"
           />
-          <button 
+          <button
             data-index="${index}"
             data-day="${day}"
             data-timeIndex="${i}"
@@ -283,15 +328,15 @@ function addSchedule(index, day) {
   row.innerHTML = `
           <label>Khung giờ ${leisureTime.length}:</label>
           Từ
-          <input type="time" style="width: fit-content" 
-            onchange="handleScheduleTimeChange(this.value, ${index}, ${day}, ${
+          <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00" 
+            onchange="handleScheduleTimeChange(this, ${index}, ${day}, ${
     leisureTime.length - 1
   }, 'pre')"
           
           />
           đến
-          <input type="time" style="width: fit-content" 
-            onchange="handleScheduleTimeChange(this.value, ${index}, ${day}, ${
+          <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00" 
+            onchange="handleScheduleTimeChange(this, ${index}, ${day}, ${
     leisureTime.length - 1
   }, 'post')"
           />
@@ -309,10 +354,22 @@ document.addEventListener("DOMContentLoaded", async function () {
   const loadingOverlay = document.getElementById("loadingOverlay");
   loadingOverlay.style.display = "flex";
 
-  await Promise.all([getAllUser(), getStudentCalendar(), getTrainerCalendar()]);
+  await Promise.all([
+    getAllUser(),
+    getStudentCalendar(),
+    getTrainerCalendar(),
+    getScheduleSheet(),
+  ]);
 
-  studentData = studentData.map((s) => {
+  studentData = studentData.map((s, index) => {
     if (studentCalendar[s.name]) {
+      const scheduleCalendar =
+        scheduleSheetData.length > 0 && scheduleSheetData[index]
+          ? scheduleSheetData[index]
+              .slice(-7)
+              .map((i) => parseTimeTrainerString(i))
+          : Array(7).fill([{ time: "", trainer: "" }]);
+
       studentCalendar[s.name] = { ...studentCalendar[s.name], ...s };
       return {
         ...s,
@@ -322,7 +379,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           )
         ),
         email: studentCalendar[s.name].email,
-        classes: Array(7).fill([{ time: "", trainer: "" }]),
+        classes: scheduleCalendar,
         status: "",
         adminNote: "",
       };
@@ -455,7 +512,6 @@ function convertSchedule(inputArray) {
 
 function convertStudentData(studentData) {
   return studentData.map((student) => {
-    console.log(" returnstudentData.map ~ student:", student);
     const formattedClasses = student.classes
       ? student.classes.map((dayClasses) => {
           return dayClasses
@@ -485,3 +541,19 @@ function convertStudentData(studentData) {
     ];
   });
 }
+
+const getScheduleSheet = async () => {
+  await fetch(`${ADMIN_API_URL}?type=get_schedule_sheet`, {
+    method: "GET",
+    redirect: "follow",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+  })
+    .then(async (response) => {
+      const json = await response.json();
+      const { data, success } = JSON.parse(json.message);
+      if (success) scheduleSheetData = data;
+    })
+    .catch((error) => {
+      console.error("Lỗi khi lấy dữ liệu:", error);
+    });
+};

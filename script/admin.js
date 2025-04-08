@@ -80,6 +80,18 @@ function doPost(e) {
   }
 }
 
+function doGet(e) {
+  const type = e.parameter.type;
+
+  if (type === "get_schedule_sheet") {
+    return getScheduleSheetData();
+  }
+
+  return ContentService.createTextOutput(
+    JSON.stringify({ success: false, message: "Missing type in parameter" })
+  ).setMimeType(ContentService.MimeType.JSON);
+}
+
 function handleScheduleSheet(data) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
@@ -120,6 +132,25 @@ function handleScheduleSheet(data) {
   sheet.getRange("B2").setValue(fromTime);
   sheet.getRange("B3").setValue(toTime);
 
+  let headerDates = [];
+  for (let i = 0; i < 7; i++) {
+    let d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    headerDates.push(
+      `${
+        [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday",
+        ][i]
+      } (${formatDate(d)})`
+    );
+  }
+
   var headers = [
     "Name",
     "Timezone",
@@ -128,13 +159,7 @@ function handleScheduleSheet(data) {
     "Cú Pháp Zoom",
     "Status",
     "Notes",
-    `Monday (${fromTime})`,
-    `Tuesday (${formatDate(new Date(monday.setDate(monday.getDate() + 1)))})`,
-    `Wednesday (${formatDate(new Date(monday.setDate(monday.getDate() + 2)))})`,
-    `Thursday (${formatDate(new Date(monday.setDate(monday.getDate() + 3)))})`,
-    `Friday (${formatDate(new Date(monday.setDate(monday.getDate() + 4)))})`,
-    `Saturday (${formatDate(new Date(monday.setDate(monday.getDate() + 5)))})`,
-    `Sunday (${toTime})`,
+    ...headerDates,
   ];
 
   sheet
@@ -157,11 +182,61 @@ function handleScheduleSheet(data) {
     sheet
       .getRange(5, 1, lastRow - 4, headers.length)
       .setBorder(true, true, true, true, true, true);
+    sheet.autoResizeRows(1, lastRow - 4);
   }
 
   sheet.getDataRange().setWrap(true);
-  sheet.autoResizeRows(1, lastRow - 4);
   sheet.autoResizeColumns(1, headers.length);
 
   return sendSuccessResponse();
+}
+
+function getScheduleSheetData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const currentDate = new Date();
+
+  // Tính ngày thứ 2 của tuần hiện tại
+  let dayOfWeek = currentDate.getDay();
+  let monday = new Date(currentDate);
+  monday.setDate(currentDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+
+  // Nếu là thứ 7 hoặc CN thì lấy tuần kế tiếp
+  if (dayOfWeek === 6 || dayOfWeek === 0) {
+    monday.setDate(monday.getDate() + 7);
+  }
+
+  let sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  const fromTime = formatDate(monday);
+  const toTime = formatDate(sunday);
+  const sheetName = `SCHEDULE :${fromTime} - ${toTime}`;
+
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    return sendJsonResponse({
+      success: false,
+      message: `Sheet "${sheetName}" not found.`,
+    });
+  }
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+
+  // Dữ liệu bắt đầu từ dòng 6 (dòng 1–5 là tiêu đề + thông tin phụ)
+  if (lastRow <= 5) {
+    return sendJsonResponse({
+      success: true,
+      data: [],
+      message: "No data rows found in the schedule.",
+    });
+  }
+
+  const dataRange = sheet.getRange(6, 1, lastRow - 5, lastCol);
+  const data = dataRange.getValues();
+
+  return sendJsonResponse({
+    success: true,
+    data,
+  });
 }
