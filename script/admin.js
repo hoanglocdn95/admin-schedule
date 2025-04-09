@@ -52,7 +52,7 @@ function LogToSheet(message) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var logSheet = ss.getSheetByName("Logs") || ss.insertSheet("Logs");
 
-  logSheet.appendRow([new Date(), message]).setWrap(true);
+  logSheet.appendRow([new Date(), message]);
 
   var maxRows = 100;
   var rowCount = logSheet.getLastRow();

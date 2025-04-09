@@ -41,14 +41,8 @@ function logout() {
 function addUserInfoToSchedule(scheduleData, email, name, timezone) {
   return scheduleData.map((row) =>
     row.map((cell) => {
-      console.log(" row.map ~ cell:", cell);
       if (cell.trim() !== "") {
-        const times = cell
-          .split(",")
-          .map((timeRange) => {
-            convertTimeByTimezone(timeRange, userInfo.timezone, timezone);
-          })
-          .join(", ");
+        const times = cell.split(",").join(", ");
         return `${name} - ${timezone} - ${email} (${times})`;
       }
       return cell;

@@ -14,7 +14,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   form.addEventListener("submit", async function (event) {
     const userInStorage = JSON.parse(sessionStorage.getItem("user_info"));
-    console.log(" userInStorage:", userInStorage);
 
     event.preventDefault();
 

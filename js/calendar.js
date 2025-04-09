@@ -128,8 +128,6 @@ function generateTableBody() {
       };
 
       saveScheduleBtn.onclick = function () {
-        editScheduleBtn.innerText = "Edit";
-        saveScheduleBtn.style.visibility = "hidden";
         saveStudentSchedule(index, day);
       };
 
@@ -139,23 +137,24 @@ function generateTableBody() {
 
       generateRegisterClass(index, day);
 
-      document
-        .querySelector("#session-quantity")
-        .addEventListener("change", function () {
-          const currentClasses = studentData[index].classes[day];
-          const tmp = Array(+this.value)
-            .fill({ time: "", trainer: "" })
-            .map((c, i) => {
-              if (currentClasses[i]) {
-                return { ...currentClasses[i] };
-              }
-              return c;
-            });
+      const sessionQuantity = document.getElementById("session-quantity");
+      sessionQuantity.value = studentData[index].classes[day].length + "";
 
-          studentData[index].classes[day] = [...tmp];
+      sessionQuantity.addEventListener("change", function () {
+        const currentClasses = studentData[index].classes[day];
+        const tmp = Array(+this.value)
+          .fill({ time: "", trainer: "" })
+          .map((c, i) => {
+            if (currentClasses[i]) {
+              return { ...currentClasses[i] };
+            }
+            return c;
+          });
 
-          generateRegisterClass(index, day);
-        });
+        studentData[index].classes[day] = [...tmp];
+
+        generateRegisterClass(index, day);
+      });
 
       M.Modal.getInstance(document.getElementById("studentModal")).open();
     };
@@ -163,7 +162,7 @@ function generateTableBody() {
 }
 
 function handleClassesTimeChange(inputEl, index, day, indexTime, position) {
-  const value = inputEl.value;
+  let value = inputEl.value;
   const [hour, minute] = value.split(":").map(Number);
 
   let roundedMinute = Math.round(minute / 15) * 15;
@@ -184,7 +183,7 @@ function handleClassesTimeChange(inputEl, index, day, indexTime, position) {
       roundedMinute
     ).padStart(2, "0")}`;
     inputEl.value = formattedTime;
-    return;
+    value = formattedTime;
   }
 
   const currentValue = studentData[index].classes[day][indexTime].time;
@@ -208,6 +207,17 @@ function generateRegisterClass(index, day) {
   const registerClassContainer = document.getElementById("register-class");
   registerClassContainer.innerHTML = "";
 
+  const trainerOptions = trainerData.filter((tr) => {
+    return trainerCalendar[tr.name]?.times[day]?.length > 0;
+  });
+
+  if (trainerOptions.length === 0) {
+    studentData[index].classes = [];
+    registerClassContainer.innerHTML =
+      "<h6 style='color: red; margin-bottom: 10px;'>Không có trainer rảnh trong ngày này</h6>";
+    return;
+  }
+
   studentData[index].classes[day].map((classItem, i) => {
     const [start, end] = classItem.time ? classItem.time.split("-") : ["", ""];
     const settingSession = `
@@ -226,7 +236,7 @@ function generateRegisterClass(index, day) {
                   <option value="" disabled ${
                     classItem.trainer ? "" : "selected"
                   } selected>Chọn Trainer</option>
-                  ${trainerData
+                  ${trainerOptions
                     .map((tr) => {
                       return `<option value="${tr.name}" ${
                         classItem.trainer === tr.name ? "selected" : ""
@@ -247,7 +257,7 @@ function deleteTime(index, day, indexTime) {
 }
 
 function handleScheduleTimeChange(inputEl, index, day, indexTime, position) {
-  const value = inputEl.value;
+  let value = inputEl.value;
   const [hour, minute] = value.split(":").map(Number);
 
   let roundedMinute = Math.round(minute / 15) * 15;
@@ -268,7 +278,7 @@ function handleScheduleTimeChange(inputEl, index, day, indexTime, position) {
       roundedMinute
     ).padStart(2, "0")}`;
     inputEl.value = formattedTime;
-    return;
+    value = formattedTime;
   }
 
   const currentValue = studentData[index].times[day][indexTime];
@@ -374,9 +384,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       return {
         ...s,
         times: studentCalendar[s.name].times.map((day) =>
-          day.map((timeRange) =>
-            convertTimeByTimezone(timeRange, s.timezone, userInfo.timezone)
-          )
+          day.map((timeRange) => {
+            return convertTimeByTimezone(
+              timeRange,
+              s.timezone,
+              userInfo.timezone
+            );
+          })
         ),
         email: studentCalendar[s.name].email,
         classes: scheduleCalendar,
@@ -398,12 +412,33 @@ const closeModal = () => {
 };
 
 const saveClasses = (index, day) => {
-  // const timezone = studentData[index].timezone;
-  // const name = studentData[index].name;
-  // const email = studentData[index].email;
-  // const output = convertSchedule(studentData[index].times);
+  const schedule = studentData[index].classes?.[day] || [];
+
+  if (schedule.length === 0) {
+    M.toast({
+      html: "Không có lớp nào được đăng ký!",
+      classes: "red",
+    });
+    return;
+  }
+
+  const isInvalid = schedule.some((entry) => {
+    if (!entry.time || !entry.trainer) return true;
+
+    const timeRegex = /^\d{2}:\d{2}\s*-\s*\d{2}:\d{2}$/;
+    return !timeRegex.test(entry.time);
+  });
+
+  if (isInvalid) {
+    M.toast({
+      html: "Vui lòng kiểm tra lại thời gian (hh:mm - hh:mm) và trainer!",
+      classes: "red",
+    });
+    return;
+  }
 
   const updatedSchedule = convertStudentData(studentData);
+  console.log(" saveClasses ~ updatedSchedule:", updatedSchedule);
 
   loadingOverlay.style.display = "flex";
 
@@ -414,6 +449,7 @@ const saveClasses = (index, day) => {
     body: JSON.stringify({
       scheduledData: updatedSchedule,
       type: "handle_student_schedule",
+      currentEmail: studentData[index].email,
     }),
   })
     .then((response) => response.json())
@@ -432,82 +468,131 @@ const saveClasses = (index, day) => {
 };
 
 function saveStudentSchedule(index, day) {
-  const isTrainer = false;
-  const timezone = studentData[index].timezone;
-  const name = studentData[index].name;
-  const email = studentData[index].email;
-  const output = convertSchedule(studentData[index].times);
+  try {
+    const timezone = studentData[index].timezone;
+    const name = studentData[index].name;
+    const email = studentData[index].email;
+    const output = convertSchedule(studentData[index].times, timezone);
 
-  const updatedSchedule = addUserInfoToSchedule(output, email, name, timezone);
+    const updatedSchedule = addUserInfoToSchedule(
+      output,
+      email,
+      name,
+      timezone
+    );
 
-  loadingOverlay.style.display = "flex";
+    loadingOverlay.style.display = "flex";
 
-  fetch(SCHEDULE_API_URL, {
-    redirect: "follow",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    method: "POST",
-    body: JSON.stringify({
-      scheduledData: updatedSchedule,
-      timezone,
-      type: isTrainer ? "handle_trainer_calendar" : "handle_student_calendar",
-      currentEmail: email,
-    }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      M.toast({
-        html: `Lịch rảnh của ${name} đã được lưu!`,
-        classes: "green darken-1",
+    fetch(SCHEDULE_API_URL, {
+      redirect: "follow",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      method: "POST",
+      body: JSON.stringify({
+        scheduledData: updatedSchedule,
+        timezone,
+        type: "handle_student_calendar",
+        currentEmail: email,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        M.toast({
+          html: `Lịch rảnh của ${name} đã được lưu!`,
+          classes: "green darken-1",
+        });
+
+        document.querySelector("#edit-schedule-btn").innerText = "Edit";
+        document.querySelector("#save-schedule-btn").style.visibility =
+          "hidden";
+
+        generateTableBody();
+        generateSchedule(index, day);
+      })
+      .catch((error) => {
+        console.error("error:", error);
+        M.toast({
+          html: "Lưu không thành công!",
+          classes: "red",
+        });
+      })
+      .finally(() => {
+        loadingOverlay.style.display = "none";
       });
-      generateTableBody();
-
-      generateSchedule(index, day);
-    })
-    .catch((error) => {
-      console.error("error:", error);
-    })
-    .finally(() => {
-      loadingOverlay.style.display = "none";
+  } catch (err) {
+    loadingOverlay.style.display = "none";
+    M.toast({
+      html: err.message,
+      classes: "red",
     });
+    return; // Dừng lại, không gửi request
+  }
 }
 
-function convertSchedule(inputArray) {
-  let periods = [
-    { label: "Sáng (8:00 - 12:00)*", start: 8, end: 12 },
-    { label: "Chiều (12:00 - 17:00)", start: 12, end: 17 },
-    { label: "Tối (17:00 - 23:00)", start: 17, end: 23 },
+function convertSchedule(inputArray, timezone) {
+  const periods = [
+    { label: "Sáng (8:00 - 12:00)*", start: 8 * 60, end: 12 * 60 },
+    { label: "Chiều (12:00 - 17:00)", start: 12 * 60, end: 17 * 60 },
+    { label: "Tối (17:00 - 23:00)", start: 17 * 60, end: 23 * 60 },
   ];
 
-  // Tạo output với 3 phần tử (Sáng, Chiều, Tối), mỗi phần tử có 7 chuỗi tương ứng 7 ngày
-  let output = Array.from({ length: 3 }, () => Array(7).fill(""));
+  // Khởi tạo mảng 3 periods, mỗi period có 7 ngày là chuỗi rỗng
+  const output = Array.from({ length: 3 }, () =>
+    Array.from({ length: 7 }, () => [])
+  );
 
-  // Duyệt từng ngày trong tuần
+  const timeRegex = /^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/;
+
   inputArray.forEach((dayArray, dayIndex) => {
-    // Duyệt từng khoảng thời gian trong ngày đó
-    dayArray.forEach((timeRange) => {
-      let match = timeRange.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
-      if (match) {
-        let startHour = parseInt(match[1], 10);
-        let endHour = parseInt(match[3], 10);
+    if (!Array.isArray(dayArray)) return;
 
-        // Phân loại vào các khoảng sáng, chiều, tối
-        periods.forEach((period, periodIndex) => {
-          if (
-            (startHour < period.end && endHour > period.start) || // Trường hợp giao nhau
-            (startHour >= period.start && endHour <= period.end) // Trường hợp nằm trọn
-          ) {
-            if (output[periodIndex][dayIndex]) {
-              output[periodIndex][dayIndex] += ", " + timeRange;
-            } else {
-              output[periodIndex][dayIndex] = timeRange;
-            }
-          }
-        });
+    dayArray.forEach((time) => {
+      const timeRange = time
+        ? convertTimeByTimezone(time, userInfo.timezone, timezone)
+        : "";
+      if (!timeRange || typeof timeRange !== "string") {
+        throw new Error(
+          "Dữ liệu khung giờ không hợp lệ (trống hoặc sai kiểu)."
+        );
+      }
+
+      const match = timeRange.trim().match(timeRegex);
+      if (!match) {
+        throw new Error(`Định dạng không hợp lệ: ${timeRange}`);
+      }
+
+      const [, sh, sm, eh, em] = match.map(Number);
+      const start = sh * 60 + sm;
+      const end = eh * 60 + em;
+
+      if (start >= end) {
+        throw new Error(`Giờ bắt đầu phải nhỏ hơn giờ kết thúc: ${timeRange}`);
+      }
+
+      // Tìm period phù hợp nhất (giao nhau lớn nhất)
+      let bestMatch = -1;
+      let maxOverlap = -1;
+
+      periods.forEach((period, i) => {
+        const overlapStart = Math.max(start, period.start);
+        const overlapEnd = Math.min(end, period.end);
+        const overlap = Math.max(0, overlapEnd - overlapStart);
+
+        if (overlap > maxOverlap || (overlap === maxOverlap && i > bestMatch)) {
+          maxOverlap = overlap;
+          bestMatch = i;
+        }
+      });
+
+      if (bestMatch !== -1) {
+        output[bestMatch][dayIndex].push(timeRange);
       }
     });
   });
 
-  return output;
+  // Chuyển mảng thời gian từng ô thành chuỗi
+  return output.map((periodRow) =>
+    periodRow.map((dayCell) => dayCell.join(", "))
+  );
 }
 
 function convertStudentData(studentData) {
