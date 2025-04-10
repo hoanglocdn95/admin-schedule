@@ -5,7 +5,7 @@ const ACCOUNT_API_URL =
   "https://script.google.com/macros/s/AKfycbxa7-dhPgo48Q3eVKnQjQNKI8oi4ykDfnTzi9hQDSfhGk2SrMBimc1yagzxXLULNs7tYQ/exec";
 
 const ADMIN_API_URL =
-  "https://script.google.com/macros/s/AKfycbwMJ2HwNzTZtaAatVA4Vu_pyyw4Iz_w1fu-GCyXqsDaXGrN4FG7toEiXWOiH0SphNqowA/exec";
+  "https://script.google.com/macros/s/AKfycbw9EWS3bOp9ECi_0sjQHEUFQGJT6IrZ34faBPsB_pnjUVVXCv5WDzyXIzScGKV-50YofQ/exec";
 
 const REMAIN_TIME_TO_EDIT = 5;
 
@@ -206,10 +206,14 @@ function parseTimeTrainerString(input) {
 
   lines.forEach((line) => {
     const match = line.match(/^(.+?)\s*\((.+)\)$/);
+
     if (match) {
+      const trainer = match[2].trim();
+      const color = trainerData.filter((tr) => tr.name === trainer)[0].color;
       result.push({
         time: match[1].trim(),
-        trainer: match[2].trim(),
+        trainer,
+        color,
       });
     }
   });

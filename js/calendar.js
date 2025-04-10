@@ -138,12 +138,15 @@ function generateTableBody() {
       generateRegisterClass(index, day);
 
       const sessionQuantity = document.getElementById("session-quantity");
-      sessionQuantity.value = studentData[index].classes[day].length + "";
+      sessionQuantity.value =
+        studentData[index].classes && studentData[index].classes.length > 0
+          ? studentData[index].classes[day].length + ""
+          : "0";
 
       sessionQuantity.addEventListener("change", function () {
         const currentClasses = studentData[index].classes[day];
         const tmp = Array(+this.value)
-          .fill({ time: "", trainer: "" })
+          .fill({ time: "", trainer: "", color: "" })
           .map((c, i) => {
             if (currentClasses[i]) {
               return { ...currentClasses[i] };
@@ -200,7 +203,10 @@ function handleClassesTimeChange(inputEl, index, day, indexTime, position) {
 }
 
 function handleClassesTrainerChange(value, index, day, indexTime) {
+  const trainer = trainerData.filter((tr) => tr.name === value);
+
   studentData[index].classes[day][indexTime].trainer = value;
+  studentData[index].classes[day][indexTime].color = trainer[0].color;
 }
 
 function generateRegisterClass(index, day) {
@@ -240,7 +246,9 @@ function generateRegisterClass(index, day) {
                     .map((tr) => {
                       return `<option value="${tr.name}" ${
                         classItem.trainer === tr.name ? "selected" : ""
-                      }>${tr.name}</option>`;
+                      } style="background-color: ${tr.color}">${
+                        tr.name
+                      }</option>`;
                     })
                     .join("")}
                 </select>
@@ -378,7 +386,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           ? scheduleSheetData[index]
               .slice(-7)
               .map((i) => parseTimeTrainerString(i))
-          : Array(7).fill([{ time: "", trainer: "" }]);
+          : Array(7).fill([{ time: "", trainer: "", color: "" }]);
 
       studentCalendar[s.name] = { ...studentCalendar[s.name], ...s };
       return {
@@ -394,8 +402,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         ),
         email: studentCalendar[s.name].email,
         classes: scheduleCalendar,
-        status: "",
-        adminNote: "",
+        status: scheduleSheetData[index][5] || "",
+        adminNote: scheduleSheetData[index][6] || "",
       };
     }
     return s;
@@ -438,7 +446,6 @@ const saveClasses = (index, day) => {
   }
 
   const updatedSchedule = convertStudentData(studentData);
-  console.log(" saveClasses ~ updatedSchedule:", updatedSchedule);
 
   loadingOverlay.style.display = "flex";
 
@@ -600,15 +607,15 @@ function convertStudentData(studentData) {
     const formattedClasses = student.classes
       ? student.classes.map((dayClasses) => {
           return dayClasses
-            .map((c) =>
-              c.time && c.trainer
+            .map((c) => {
+              return c.time && c.trainer
                 ? `${convertTimeByTimezone(
                     c.time,
                     userInfo.timezone,
                     student.timezone
-                  )} (${c.trainer})`
-                : ""
-            )
+                  )} (${c.trainer})#${c.color}#`
+                : "";
+            })
             .filter((i) => i)
             .join("\n");
         })

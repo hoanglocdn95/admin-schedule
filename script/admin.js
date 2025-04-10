@@ -172,12 +172,61 @@ function handleScheduleSheet(data) {
 
   if (data && data.length > 0) {
     sheet.getRange(6, 1, data.length, headers.length).setValues(data);
+
+    /////
+    // BẮT ĐẦU xử lý màu dòng riêng từ cột H đến N
+    for (let row = 6; row < 6 + data.length; row++) {
+      for (let col = 8; col <= 14; col++) {
+        const cell = sheet.getRange(row, col);
+
+        const rawText = cell.getValue();
+        if (!rawText) continue;
+        LogToSheet("rawText" + " : " + rawText);
+
+        const lines = rawText.toString().split("\n");
+        // const builder = SpreadsheetApp.newRichTextValue();
+        let fullText = "";
+        let segments = [];
+
+        lines.forEach((line) => {
+          const match = line.match(/^(.*?)#(.*?)#$/); // Tách phần text và color
+          if (match) {
+            const text = match[1].trim(); // "hh:mm-hh:mm (trainer)"
+            const color = match[2].trim(); // mã màu
+            LogToSheet(text + " - " + color);
+            segments.push({ text, color });
+            fullText += text + "\n";
+          } else {
+            segments.push({ text: line, color: "#000000" });
+            fullText += line + "\n";
+          }
+        });
+
+        fullText = fullText.trimEnd(); // bỏ dòng thừa
+
+        // builder.setText(fullText);
+        const builder = SpreadsheetApp.newRichTextValue().setText(fullText);
+
+        let start = 0;
+        segments.forEach(({ text, color }) => {
+          LogToSheet("segments: " + text + " - " + color);
+          const style = SpreadsheetApp.newTextStyle()
+            .setForegroundColor(color)
+            .build();
+          builder.setTextStyle(start, start + text.length, style);
+          start += text.length + 1;
+        });
+
+        cell.setRichTextValue(builder.build());
+      }
+    }
+    /////
   } else {
     Logger.log("Không có dữ liệu để nhập vào sheet.");
   }
 
   var lastRow = sheet.getLastRow();
-  Logger.log("lastRow", lastRow);
+  LogToSheet("lastRow" + " : " + lastRow);
   if (lastRow > 5) {
     sheet
       .getRange(5, 1, lastRow - 4, headers.length)
@@ -239,4 +288,15 @@ function getScheduleSheetData() {
     success: true,
     data,
   });
+}
+
+function extractHashData(input) {
+  const match = input.match(/#(.*?)#/);
+  const hashValue = match ? match[1] : null;
+  const cleaned = input.replace(/#.*?#/, "").trim();
+
+  return {
+    value: cleaned,
+    color: hashValue,
+  };
 }
