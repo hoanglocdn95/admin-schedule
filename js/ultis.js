@@ -208,11 +208,11 @@ function parseTimeTrainerString(input) {
 
     if (match) {
       const trainer = match[2].trim();
-      const color = trainerData.filter((tr) => tr.name === trainer)[0].color;
+      const color = trainerData.filter((tr) => tr.name === trainer)[0]?.color;
       result.push({
         time: match[1].trim(),
         trainer,
-        color,
+        color: color || "#000000",
       });
     }
   });
