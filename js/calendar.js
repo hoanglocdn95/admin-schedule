@@ -386,7 +386,14 @@ document.addEventListener("DOMContentLoaded", async function () {
           ? scheduleSheetData[index]
               .slice(-7)
               .map((i) => parseTimeTrainerString(i))
-          : Array(7).fill([{ time: "", trainer: "", color: "" }]);
+          : Array(7).fill([]);
+
+      let status = "";
+      let adminNote = "";
+      if (scheduleSheetData[index]) {
+        status = scheduleSheetData[index][5] || "";
+        adminNote = scheduleSheetData[index][6] || "";
+      }
 
       studentCalendar[s.name] = { ...studentCalendar[s.name], ...s };
       return {
@@ -402,8 +409,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         ),
         email: studentCalendar[s.name].email,
         classes: scheduleCalendar,
-        status: scheduleSheetData[index][5] || "",
-        adminNote: scheduleSheetData[index][6] || "",
+        status,
+        adminNote,
       };
     }
     return s;
@@ -457,12 +464,14 @@ const saveClasses = (index, day) => {
       scheduledData: updatedSchedule,
       type: "handle_student_schedule",
       currentEmail: studentData[index].email,
+      indexRow: index,
     }),
   })
     .then((response) => response.json())
     .then((data) => {
       M.toast({ html: "Dữ liệu đã được lưu!", classes: "green darken-1" });
       setTimeout(() => {
+        closeModal();
         generateTableBody();
       }, 1000);
     })
@@ -511,6 +520,7 @@ function saveStudentSchedule(index, day) {
         document.querySelector("#edit-schedule-btn").innerText = "Edit";
         document.querySelector("#save-schedule-btn").style.visibility =
           "hidden";
+        closeModal();
 
         generateTableBody();
         generateSchedule(index, day);

@@ -71,9 +71,8 @@ function doPost(e) {
     }
 
     var data = JSON.parse(e.postData.contents);
-
     if (data.type === "handle_student_schedule") {
-      return handleScheduleSheet(data.scheduledData);
+      return handleScheduleSheet(data.scheduledData, +data.indexRow);
     }
   } catch (error) {
     return sendErrorResponse(error.message);
@@ -92,7 +91,7 @@ function doGet(e) {
   ).setMimeType(ContentService.MimeType.JSON);
 }
 
-function handleScheduleSheet(data) {
+function handleScheduleSheet(data, indexRow) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   var currentDate = new Date();
@@ -113,28 +112,9 @@ function handleScheduleSheet(data) {
   const fromTime = formatDate(monday);
   const toTime = formatDate(sunday);
 
-  var sheetName = `SCHEDULE :${fromTime} - ${toTime}`;
-
-  var sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
-  sheet.clear();
-
-  // Tiêu đề
-  sheet
-    .getRange("A1:C1")
-    .merge()
-    .setValue("STUDENTS WEEKLY SCHEDULE")
-    .setFontWeight("bold")
-    .setBackground(firstColColor.student.bg)
-    .setFontColor(firstColColor.student.text);
-  // .setHorizontalAlignment("center");
-  sheet.getRange("A2").setValue("From");
-  sheet.getRange("A3").setValue("To");
-  sheet.getRange("B2").setValue(fromTime);
-  sheet.getRange("B3").setValue(toTime);
-
   let headerDates = [];
   for (let i = 0; i < 7; i++) {
-    let d = new Date(monday);
+    const d = new Date(monday);
     d.setDate(monday.getDate() + i);
     headerDates.push(
       `${
@@ -151,7 +131,7 @@ function handleScheduleSheet(data) {
     );
   }
 
-  var headers = [
+  const headers = [
     "Name",
     "Timezone",
     "Email",
@@ -162,71 +142,73 @@ function handleScheduleSheet(data) {
     ...headerDates,
   ];
 
-  sheet
-    .getRange(5, 1, 1, headers.length)
-    .setValues([headers])
-    .setFontWeight("bold")
-    .setHorizontalAlignment("center")
-    .setVerticalAlignment("top")
-    .setBackground("#cccccc");
+  const sheetName = `SCHEDULE: ${fromTime} - ${toTime}`;
+  let sheet = ss.getSheetByName(sheetName);
 
-  if (data && data.length > 0) {
-    sheet.getRange(6, 1, data.length, headers.length).setValues(data);
+  let lastRow = sheet ? sheet.getLastRow() : 0;
 
-    /////
-    // BẮT ĐẦU xử lý màu dòng riêng từ cột H đến N
-    for (let row = 6; row < 6 + data.length; row++) {
+  if (!sheet || lastRow < indexRow + 6) {
+    sheet = ss.insertSheet(sheetName);
+
+    sheet
+      .getRange("A1:C1")
+      .merge()
+      .setValue("STUDENTS WEEKLY SCHEDULE")
+      .setFontWeight("bold")
+      .setBackground(firstColColor.student.bg)
+      .setFontColor(firstColColor.student.text);
+    sheet.getRange("A2").setValue("From");
+    sheet.getRange("A3").setValue("To");
+    sheet.getRange("B2").setValue(fromTime);
+    sheet.getRange("B3").setValue(toTime);
+
+    sheet
+      .getRange(5, 1, 1, headers.length)
+      .setValues([headers])
+      .setFontWeight("bold")
+      .setHorizontalAlignment("center")
+      .setVerticalAlignment("top")
+      .setBackground("#cccccc");
+
+    if (data && data.length > 0) {
+      sheet.getRange(6, 1, data.length, headers.length).setValues(data);
+
+      for (let row = 6; row < 6 + data.length; row++) {
+        for (let col = 8; col <= 14; col++) {
+          const cell = sheet.getRange(row, col);
+
+          const rawText = cell.getValue();
+          if (!rawText) continue;
+
+          applyRichTextToCell(cell, rawText);
+        }
+      }
+      /////
+    } else {
+      LogToSheet("Không có dữ liệu để nhập vào sheet.");
+    }
+  } else {
+    if (data && data.length > 0) {
+      sheet
+        .getRange(indexRow + 6, 1, 1, headers.length)
+        .setValues([data[indexRow]]);
+
       for (let col = 8; col <= 14; col++) {
-        const cell = sheet.getRange(row, col);
+        const cell = sheet.getRange(indexRow + 6, col);
 
         const rawText = cell.getValue();
         if (!rawText) continue;
-        LogToSheet("rawText" + " : " + rawText);
 
-        const lines = rawText.toString().split("\n");
-        // const builder = SpreadsheetApp.newRichTextValue();
-        let fullText = "";
-        let segments = [];
-
-        lines.forEach((line) => {
-          const match = line.match(/^(.*?)#(.*?)#$/); // Tách phần text và color
-          if (match) {
-            const text = match[1].trim(); // "hh:mm-hh:mm (trainer)"
-            const color = match[2].trim(); // mã màu
-            LogToSheet(text + " - " + color);
-            segments.push({ text, color });
-            fullText += text + "\n";
-          } else {
-            segments.push({ text: line, color: "#000000" });
-            fullText += line + "\n";
-          }
-        });
-
-        fullText = fullText.trimEnd(); // bỏ dòng thừa
-
-        // builder.setText(fullText);
-        const builder = SpreadsheetApp.newRichTextValue().setText(fullText);
-
-        let start = 0;
-        segments.forEach(({ text, color }) => {
-          LogToSheet("segments: " + text + " - " + color);
-          const style = SpreadsheetApp.newTextStyle()
-            .setForegroundColor(color)
-            .build();
-          builder.setTextStyle(start, start + text.length, style);
-          start += text.length + 1;
-        });
-
-        cell.setRichTextValue(builder.build());
+        applyRichTextToCell(cell, rawText);
       }
+    } else {
+      LogToSheet(`Không có dữ liệu để nhập vào sheet tại hàng ${indexRow + 6}`);
     }
-    /////
-  } else {
-    Logger.log("Không có dữ liệu để nhập vào sheet.");
   }
 
-  var lastRow = sheet.getLastRow();
-  LogToSheet("lastRow" + " : " + lastRow);
+  /////
+
+  lastRow = sheet.getLastRow();
   if (lastRow > 5) {
     sheet
       .getRange(5, 1, lastRow - 4, headers.length)
@@ -259,7 +241,7 @@ function getScheduleSheetData() {
 
   const fromTime = formatDate(monday);
   const toTime = formatDate(sunday);
-  const sheetName = `SCHEDULE :${fromTime} - ${toTime}`;
+  const sheetName = `SCHEDULE: ${fromTime} - ${toTime}`;
 
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
@@ -290,13 +272,41 @@ function getScheduleSheetData() {
   });
 }
 
-function extractHashData(input) {
-  const match = input.match(/#(.*?)#/);
-  const hashValue = match ? match[1] : null;
-  const cleaned = input.replace(/#.*?#/, "").trim();
+function applyRichTextToCell(cell, rawText) {
+  const lines = rawText.toString().split("\n");
+  let fullText = "";
+  let segments = [];
 
-  return {
-    value: cleaned,
-    color: hashValue,
-  };
+  lines.forEach((line) => {
+    const match = line.match(/^(.*?)#(.*?)#$/);
+    if (match) {
+      const text = match[1].trim();
+      const color = match[2].trim();
+      segments.push({ text, color });
+      fullText += text + "\n";
+    } else {
+      segments.push({ text: line, color: "#000000" });
+      fullText += line + "\n";
+    }
+  });
+
+  try {
+    fullText = fullText.trimEnd();
+    const builder = SpreadsheetApp.newRichTextValue().setText(fullText);
+    let start = 0;
+
+    segments.forEach(({ text, color }) => {
+      const style = SpreadsheetApp.newTextStyle()
+        .setForegroundColor(color)
+        .build();
+      builder.setTextStyle(start, start + text.length, style);
+      start += text.length + 1;
+    });
+
+    const built = builder.build();
+
+    cell.setRichTextValue(built);
+  } catch (err) {
+    LogToSheet(`Error building rich text: ${err.message}`);
+  }
 }

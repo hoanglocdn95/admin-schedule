@@ -5,7 +5,7 @@ const ACCOUNT_API_URL =
   "https://script.google.com/macros/s/AKfycbxa7-dhPgo48Q3eVKnQjQNKI8oi4ykDfnTzi9hQDSfhGk2SrMBimc1yagzxXLULNs7tYQ/exec";
 
 const ADMIN_API_URL =
-  "https://script.google.com/macros/s/AKfycbw9EWS3bOp9ECi_0sjQHEUFQGJT6IrZ34faBPsB_pnjUVVXCv5WDzyXIzScGKV-50YofQ/exec";
+  "https://script.google.com/macros/s/AKfycbwxu7N-pXujHFs_ciMfr6Zv-8GJ6i53cpfN8lymwb6tcRZm1DrCuUsUXscbbAWStKAcww/exec";
 
 const REMAIN_TIME_TO_EDIT = 5;
 
@@ -100,7 +100,6 @@ function parseSchedule(allData) {
       });
     });
   });
-
   return result;
 }
 
