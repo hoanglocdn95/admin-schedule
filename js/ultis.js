@@ -29,6 +29,7 @@ if (!sessionStorage.getItem("user_email")) {
 if (!sessionStorage.getItem("user_info")) {
   window.location.href = "admin.html";
 }
+
 function formatTime(value) {
   return value && value.length < 5 ? "0" + value : value;
 }
@@ -85,8 +86,9 @@ function parseSchedule(allData) {
           const email = match[2].trim();
           let time = match[3].trim();
 
-          if (!result[name]) {
-            result[name] = {
+          if (!result[email]) {
+            result[email] = {
+              name,
               email,
               times: Array(7)
                 .fill(null)
@@ -95,11 +97,12 @@ function parseSchedule(allData) {
           }
           time = time.split(",").map((t) => t.trim());
 
-          result[name].times[dayIndex].push(...time);
+          result[email].times[dayIndex].push(...time);
         }
       });
     });
   });
+  console.log(" parseSchedule ~ result:", result);
   return result;
 }
 
@@ -204,16 +207,24 @@ function parseTimeTrainerString(input) {
   const result = [];
 
   lines.forEach((line) => {
-    const match = line.match(/^(.+?)\s*\((.+)\)$/);
+    const match = line.match(/^(.+?)\s*\((.+)-(.+@.+)\)$/);
 
     if (match) {
-      const trainer = match[2].trim();
-      const color = trainerData.filter((tr) => tr.name === trainer)[0]?.color;
+      console.log(" lines.forEach ~ match:", match);
+      const time = match[1].trim();
+      const name = match[2].trim();
+      const email = match[3].trim();
+      const color =
+        trainerData.filter((tr) => tr.email === email)[0]?.color || "#000000";
+
       result.push({
-        time: match[1].trim(),
-        trainer,
-        color: color || "#000000",
+        time,
+        trainerName: name,
+        trainerEmail: email,
+        color,
       });
+    } else {
+      console.warn("Không đúng định dạng:", line);
     }
   });
 

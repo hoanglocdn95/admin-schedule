@@ -12,9 +12,11 @@ function generateHeaders() {
   sunday.setDate(monday.getDate() + 6);
 
   let headerRow = document.getElementById("table-header");
+  let trainerHeaderRow = document.getElementById("trainer-table-header");
 
   for (let d = new Date(monday); d <= sunday; d.setDate(d.getDate() + 1)) {
     let th = document.createElement("th");
+    let thTrainer = document.createElement("th");
 
     const dayText = `${
       d.getDay() === 0 ? "Chủ Nhật" : `Thứ ${d.getDay() + 1}`
@@ -23,8 +25,12 @@ function generateHeaders() {
 
     th.textContent = dayText;
     th.className = "th-day";
-
     headerRow.appendChild(th);
+
+    thTrainer.textContent = dayText;
+    thTrainer.className = "th-day";
+    thTrainer.style.backgroundColor = "#36e13c";
+    trainerHeaderRow.appendChild(thTrainer);
   }
 }
 
@@ -48,7 +54,7 @@ function generateTableBody() {
         ? stu.classes[i]
             .map((classItem, i) => {
               return `
-          <p>${classItem.time} - ${classItem.trainer}</p>
+          <p>${classItem.time} - ${classItem.trainerName}</p>
         `;
             })
             .join("")
@@ -146,7 +152,7 @@ function generateTableBody() {
       sessionQuantity.addEventListener("change", function () {
         const currentClasses = studentData[index].classes[day];
         const tmp = Array(+this.value)
-          .fill({ time: "", trainer: "", color: "" })
+          .fill({ time: "", trainerName: "", color: "", trainerEmail: "" })
           .map((c, i) => {
             if (currentClasses[i]) {
               return { ...currentClasses[i] };
@@ -203,10 +209,12 @@ function handleClassesTimeChange(inputEl, index, day, indexTime, position) {
 }
 
 function handleClassesTrainerChange(value, index, day, indexTime) {
-  const trainer = trainerData.filter((tr) => tr.name === value);
+  const trainer = trainerData.filter((tr) => tr.email === value);
 
-  studentData[index].classes[day][indexTime].trainer = value;
-  studentData[index].classes[day][indexTime].color = trainer[0].color;
+  studentData[index].classes[day][indexTime].trainerEmail = value;
+  studentData[index].classes[day][indexTime].trainerName = trainer[0].name;
+  studentData[index].classes[day][indexTime].color =
+    trainer[0].color || "#000000";
 }
 
 function generateRegisterClass(index, day) {
@@ -214,7 +222,7 @@ function generateRegisterClass(index, day) {
   registerClassContainer.innerHTML = "";
 
   const trainerOptions = trainerData.filter((tr) => {
-    return trainerCalendar[tr.name]?.times[day]?.length > 0;
+    return trainerCalendar[tr.email]?.times[day]?.length > 0;
   });
 
   if (trainerOptions.length === 0) {
@@ -240,12 +248,12 @@ function generateRegisterClass(index, day) {
                 />
                 <select class="browser-default choose-trainer" onchange="handleClassesTrainerChange(this.value, ${index}, ${day}, ${i})">
                   <option value="" disabled ${
-                    classItem.trainer ? "" : "selected"
+                    classItem.trainerEmail ? "" : "selected"
                   } selected>Chọn Trainer</option>
                   ${trainerOptions
                     .map((tr) => {
-                      return `<option value="${tr.name}" ${
-                        classItem.trainer === tr.name ? "selected" : ""
+                      return `<option value="${tr.email}" ${
+                        classItem.trainerEmail === tr.email ? "selected" : ""
                       } style="background-color: ${tr.color}">${
                         tr.name
                       }</option>`;
@@ -379,8 +387,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     getScheduleSheet(),
   ]);
 
+  console.log(" studentData=studentData.map ~ studentCalendar:", {
+    scheduleSheetData,
+    trainerCalendar,
+  });
+
   studentData = studentData.map((s, index) => {
-    if (studentCalendar[s.name]) {
+    if (studentCalendar[s.email]) {
       const scheduleCalendar =
         scheduleSheetData.length > 0 && scheduleSheetData[index]
           ? scheduleSheetData[index]
@@ -395,10 +408,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         adminNote = scheduleSheetData[index][6] || "";
       }
 
-      studentCalendar[s.name] = { ...studentCalendar[s.name], ...s };
+      studentCalendar[s.email] = { ...studentCalendar[s.email], ...s };
       return {
         ...s,
-        times: studentCalendar[s.name].times.map((day) =>
+        times: studentCalendar[s.email].times.map((day) =>
           day.map((timeRange) => {
             return convertTimeByTimezone(
               timeRange,
@@ -407,7 +420,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             );
           })
         ),
-        email: studentCalendar[s.name].email,
+        email: studentCalendar[s.email].email,
         classes: scheduleCalendar,
         status,
         adminNote,
@@ -416,8 +429,30 @@ document.addEventListener("DOMContentLoaded", async function () {
     return s;
   });
 
+  trainerData = trainerData.map((s, index) => {
+    if (trainerCalendar[s.email]) {
+      trainerCalendar[s.email] = { ...trainerCalendar[s.email], ...s };
+      return {
+        ...s,
+        times: trainerCalendar[s.email].times.map((day) =>
+          day.map((timeRange) => {
+            return convertTimeByTimezone(
+              timeRange,
+              s.timezone,
+              userInfo.timezone
+            );
+          })
+        ),
+        email: trainerCalendar[s.email].email,
+      };
+    }
+    return s;
+  });
+
   generateHeaders();
   generateTableBody();
+
+  generateTrainerTableBody();
 
   loadingOverlay.style.display = "none";
 });
@@ -428,6 +463,7 @@ const closeModal = () => {
 
 const saveClasses = (index, day) => {
   const schedule = studentData[index].classes?.[day] || [];
+  console.log(" saveClasses ~ schedule:", schedule);
 
   if (schedule.length === 0) {
     M.toast({
@@ -438,7 +474,7 @@ const saveClasses = (index, day) => {
   }
 
   const isInvalid = schedule.some((entry) => {
-    if (!entry.time || !entry.trainer) return true;
+    if (!entry.time || !entry.trainerEmail) return true;
 
     const timeRegex = /^\d{2}:\d{2}\s*-\s*\d{2}:\d{2}$/;
     return !timeRegex.test(entry.time);
@@ -453,6 +489,7 @@ const saveClasses = (index, day) => {
   }
 
   const updatedSchedule = convertStudentData(studentData);
+  console.log(" saveClasses ~ updatedSchedule:", updatedSchedule);
 
   loadingOverlay.style.display = "flex";
 
@@ -618,12 +655,12 @@ function convertStudentData(studentData) {
       ? student.classes.map((dayClasses) => {
           return dayClasses
             .map((c) => {
-              return c.time && c.trainer
+              return c.time && c.trainerEmail
                 ? `${convertTimeByTimezone(
                     c.time,
                     userInfo.timezone,
                     student.timezone
-                  )} (${c.trainer})#${c.color}#`
+                  )} (${c.trainerName}-${c.trainerEmail})#${c.color}#`
                 : "";
             })
             .filter((i) => i)

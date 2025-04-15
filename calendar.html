@@ -7,6 +7,9 @@
     <title>Sắp xếp lịch học</title>
     <link href="./libs/materialize.min.css" rel="stylesheet" />
     <style>
+      body {
+        position: relative;
+      }
       p,
       h4,
       h5,
@@ -14,11 +17,24 @@
         margin: 0;
         width: fit-content;
       }
+
       .calendar-container {
         background-color: #faf2eb;
         height: 100%;
         min-height: 100vh;
+        margin-top: 60px;
       }
+
+      .trainer-calendar-container {
+        background-color: #faf2eb;
+        height: fit-content;
+        position: sticky;
+        top: 60px;
+        z-index: 15;
+        overflow-y: auto;
+        border-bottom: solid;
+      }
+
       table {
         width: 100%;
         border-collapse: collapse;
@@ -75,22 +91,33 @@
       .th-day {
         min-width: 130px;
       }
+      .trainer-calendar-table,
       .table-container {
         width: calc(100% - 40px);
         overflow-x: auto;
         margin: 0 20px;
         border: solid;
       }
+
       .title {
         margin: 0 auto;
         width: fit-content;
         padding: 20px;
       }
       .guide {
-        margin: 0 20px 20px;
+        margin: 0 20px;
+        padding-top: 20px;
       }
+      .trainer-guide,
       .guide p {
         font-size: 16px;
+      }
+
+      .trainer-guide {
+        position: sticky;
+        top: 0;
+        z-index: 16;
+        background: #faf2ea;
       }
 
       .nav-bar {
@@ -103,6 +130,7 @@
         font-size: 20px;
       }
 
+      .trainer-cell,
       .student-cell {
         cursor: pointer;
         position: relative;
@@ -111,6 +139,8 @@
         width: 100%;
       }
 
+      .trainer-cell::after,
+      .trainer-cell::before,
       .student-cell::after,
       .student-cell::before {
         content: "";
@@ -125,18 +155,21 @@
         transition: transform 0.4s ease-out;
       }
 
+      .trainer-cell::before,
       .student-cell::before {
         top: 0;
         transform-origin: left;
       }
 
+      .trainer-cell:hover,
       .student-cell:hover {
         background: #fe9801;
         color: #ffffff;
-        /* font-weight: bold; */
         transition: 0.5s;
       }
 
+      .trainer-cell:hover::after,
+      .trainer-cell:hover::before,
       .student-cell:hover::after,
       .student-cell:hover::before {
         transform: scaleX(1);
@@ -149,6 +182,10 @@
 
       .input-field {
         margin: 0px !important;
+      }
+
+      .trainer-calendar-body {
+        display: none;
       }
     </style>
   </head>
@@ -180,18 +217,46 @@
         </button>
       </div>
     </nav>
+    <div class="trainer-calendar-container">
+      <div class="trainer-guide guide">
+        <p>
+          Tất cả giờ được đăng ký của học viên đã được chuyển đổi theo múi giờ
+          <b id="admin-timezone">Adelaide</b> của bạn. Nếu bạn muốn thay đổi múi
+          giờ, vui lòng trở lại tab Admin để cập nhật
+        </p>
+
+        <div style="display: flex; padding: 8px 0">
+          <button onclick="toggleScheduleTrainer(this)">Hiện</button>
+          <h4
+            class="title"
+            style="color: #1e00ff; padding: 8px; display: inline"
+          >
+            Lịch giảng viên
+          </h4>
+        </div>
+      </div>
+      <div class="trainer-calendar-body">
+        <div class="trainer-calendar-table">
+          <table>
+            <thead>
+              <tr id="trainer-table-header">
+                <th
+                  style="min-width: 135px; background: #1e00ff; color: #ffffff"
+                >
+                  Tên
+                </th>
+              </tr>
+            </thead>
+            <tbody id="trainer-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
     <div class="calendar-container">
       <div id="register-calendar-guide">
-        <h4 class="title" style="color: #ff9800; margin-top: 60px">
-          Sắp xếp lịch học
+        <h4 class="title" style="color: #ff9800; padding: 8px 0 0">
+          Lịch học viên
         </h4>
-        <div class="guide">
-          <p>
-            Tất cả giờ được đăng ký của học viên đã được chuyển đổi theo múi giờ
-            <b id="admin-timezone">Adelaide</b> của bạn. Nếu bạn muốn thay đổi
-            múi giờ, vui lòng trở lại tab Admin để cập nhật
-          </p>
-        </div>
       </div>
 
       <pre id="error-container" class="error-message"></pre>
@@ -211,7 +276,7 @@
       </form>
     </div>
 
-    <!-- Thẻ modal -->
+    <!-- Thẻ student modal -->
     <div id="studentModal" class="modal" style="width: 800px">
       <div class="modal-content">
         <div class="modal-header">
@@ -291,5 +356,6 @@
     <script src="./libs/materialize.min.js"></script>
     <script src="./js/ultis.js"></script>
     <script src="./js/calendar.js"></script>
+    <script src="./js/trainer-calendar.js"></script>
   </body>
 </html>
