@@ -1,39 +1,5 @@
 document.getElementById("admin-timezone").innerText = userInfo.timezone;
 
-function generateHeaders() {
-  let today = new Date();
-  let dayOfWeek = today.getDay();
-  let monday = new Date(today);
-  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-
-  if (dayOfWeek === 6 || dayOfWeek === 0) monday.setDate(monday.getDate() + 7);
-
-  let sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-
-  let headerRow = document.getElementById("table-header");
-  let trainerHeaderRow = document.getElementById("trainer-table-header");
-
-  for (let d = new Date(monday); d <= sunday; d.setDate(d.getDate() + 1)) {
-    let th = document.createElement("th");
-    let thTrainer = document.createElement("th");
-
-    const dayText = `${
-      d.getDay() === 0 ? "Chủ Nhật" : `Thứ ${d.getDay() + 1}`
-    } (${d.toLocaleDateString("vi-VN")})`;
-    dayOfCurrentWeek.push(dayText);
-
-    th.textContent = dayText;
-    th.className = "th-day";
-    headerRow.appendChild(th);
-
-    thTrainer.textContent = dayText;
-    thTrainer.className = "th-day";
-    thTrainer.style.backgroundColor = "#36e13c";
-    trainerHeaderRow.appendChild(thTrainer);
-  }
-}
-
 function generateTableBody() {
   let tbody = document.getElementById("table-body");
   tbody.innerHTML = "";
@@ -49,7 +15,7 @@ function generateTableBody() {
     for (let i = 0; i <= 6; i++) {
       let tdInput = document.createElement("td");
       tdInput.style.padding = 0;
-      const timesString = stu.times ? stu.times[i].join(", ") : "";
+      const timesString = stu.times.length > 0 ? stu.times[i].join(", ") : "";
       const classesString = stu.classes
         ? stu.classes[i]
             .map((classItem, i) => {
@@ -76,7 +42,17 @@ function generateTableBody() {
           ${classesString}
         </div>
       `
-        : "";
+        : `
+        <div class="student-cell"
+            data-email="${stu.email}"
+            data-email="${stu.email}"
+            data-day="${i}"
+            data-name="${stu.name}"
+            data-index="${index}"
+        >
+          <p>---</p>
+        </div>
+      `;
 
       tdInput.innerHTML = htmlContent;
 
@@ -111,8 +87,8 @@ function generateTableBody() {
       document.getElementById("modal-email").innerText = email;
       document.getElementById("modal-time").innerText = dayOfCurrentWeek[day];
 
-      statusElm.value = studentData[index].status;
-      adminNoteElm.value = studentData[index].adminNote;
+      statusElm.value = studentData[index].status || "";
+      adminNoteElm.value = studentData[index].adminNote || "";
 
       statusElm.onchange = function () {
         studentData[index].status = this.value;
@@ -232,6 +208,8 @@ function generateRegisterClass(index, day) {
     return;
   }
 
+  if (!studentData[index].classes) return;
+
   studentData[index].classes[day].map((classItem, i) => {
     const [start, end] = classItem.time ? classItem.time.split("-") : ["", ""];
     const settingSession = `
@@ -314,6 +292,8 @@ function generateScheduleEdit(index, day) {
   const scheduleContainer = document.getElementById("modal-schedule");
   scheduleContainer.innerHTML = "";
 
+  if (!studentData[index].times) return;
+
   const leisureTime = studentData[index].times[day].map((t) => t.split(","));
 
   leisureTime.flat().forEach((time, i) => {
@@ -346,6 +326,8 @@ function generateScheduleEdit(index, day) {
 function addSchedule(index, day) {
   const scheduleContainer = document.getElementById("modal-schedule");
 
+  if (!studentData[index].times) return;
+
   const leisureTime = studentData[index].times[day];
 
   studentData[index].times[day].push("");
@@ -376,78 +358,18 @@ function addSchedule(index, day) {
   scheduleContainer.appendChild(row);
 }
 
-document.addEventListener("DOMContentLoaded", async function () {
-  const loadingOverlay = document.getElementById("loadingOverlay");
+const initCalendar = async () => {
   loadingOverlay.style.display = "flex";
 
   await Promise.all([
     getAllUser(),
-    getStudentCalendar(),
-    getTrainerCalendar(),
-    getScheduleSheet(),
+    getCalendarByType(SHEET_TYPE.STUDENT),
+    getCalendarByType(SHEET_TYPE.TRAINER),
+    getScheduleBySheetName(),
   ]);
 
-  console.log(" studentData=studentData.map ~ studentCalendar:", {
-    scheduleSheetData,
-    trainerCalendar,
-  });
-
-  studentData = studentData.map((s, index) => {
-    if (studentCalendar[s.email]) {
-      const scheduleCalendar =
-        scheduleSheetData.length > 0 && scheduleSheetData[index]
-          ? scheduleSheetData[index]
-              .slice(-7)
-              .map((i) => parseTimeTrainerString(i))
-          : Array(7).fill([]);
-
-      let status = "";
-      let adminNote = "";
-      if (scheduleSheetData[index]) {
-        status = scheduleSheetData[index][5] || "";
-        adminNote = scheduleSheetData[index][6] || "";
-      }
-
-      studentCalendar[s.email] = { ...studentCalendar[s.email], ...s };
-      return {
-        ...s,
-        times: studentCalendar[s.email].times.map((day) =>
-          day.map((timeRange) => {
-            return convertTimeByTimezone(
-              timeRange,
-              s.timezone,
-              userInfo.timezone
-            );
-          })
-        ),
-        email: studentCalendar[s.email].email,
-        classes: scheduleCalendar,
-        status,
-        adminNote,
-      };
-    }
-    return s;
-  });
-
-  trainerData = trainerData.map((s, index) => {
-    if (trainerCalendar[s.email]) {
-      trainerCalendar[s.email] = { ...trainerCalendar[s.email], ...s };
-      return {
-        ...s,
-        times: trainerCalendar[s.email].times.map((day) =>
-          day.map((timeRange) => {
-            return convertTimeByTimezone(
-              timeRange,
-              s.timezone,
-              userInfo.timezone
-            );
-          })
-        ),
-        email: trainerCalendar[s.email].email,
-      };
-    }
-    return s;
-  });
+  handleStudentData();
+  handleTrainerData();
 
   generateHeaders();
   generateTableBody();
@@ -455,6 +377,22 @@ document.addEventListener("DOMContentLoaded", async function () {
   generateTrainerTableBody();
 
   loadingOverlay.style.display = "none";
+};
+
+document.addEventListener("DOMContentLoaded", function () {
+  const loadingOverlay = document.getElementById("loadingOverlay");
+
+  function getTodayISODate() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  document.getElementById("dateInput").value = getTodayISODate();
+  showWeekRange();
+  initCalendar();
 });
 
 const closeModal = () => {
@@ -489,7 +427,6 @@ const saveClasses = (index, day) => {
   }
 
   const updatedSchedule = convertStudentData(studentData);
-  console.log(" saveClasses ~ updatedSchedule:", updatedSchedule);
 
   loadingOverlay.style.display = "flex";
 
@@ -502,6 +439,7 @@ const saveClasses = (index, day) => {
       type: "handle_student_schedule",
       currentEmail: studentData[index].email,
       indexRow: index,
+      sheetName: getSheetNames(SHEET_TYPE.SCHEDULE),
     }),
   })
     .then((response) => response.json())
@@ -674,25 +612,51 @@ function convertStudentData(studentData) {
       student.email || "",
       student.facebook || "",
       `${student.pteClass} - ${student.name} (Class)`,
-      student.status,
-      student.adminNote,
+      student.status || "",
+      student.adminNote || "",
       ...formattedClasses,
     ];
   });
 }
 
-const getScheduleSheet = async () => {
-  await fetch(`${ADMIN_API_URL}?type=get_schedule_sheet`, {
+const getScheduleBySheetName = async () => {
+  const sName = getSheetNames(SHEET_TYPE.SCHEDULE);
+  await fetch(`${ADMIN_API_URL}?type=get_schedule_by_name&sheetName=${sName}`, {
     method: "GET",
     redirect: "follow",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
   })
     .then(async (response) => {
       const json = await response.json();
-      const { data, success } = JSON.parse(json.message);
+      const { data, success, message } = JSON.parse(json.message);
       if (success) scheduleSheetData = data;
+      else {
+        M.toast({ html: message, classes: "blue darken-1" });
+      }
     })
     .catch((error) => {
       console.error("Lỗi khi lấy dữ liệu:", error);
     });
+};
+
+const showWeekRange = () => {
+  const dateStr = document.getElementById("dateInput").value;
+  if (!dateStr) return;
+
+  selectedDate = new Date(dateStr);
+  const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, ...
+
+  const monday = new Date(selectedDate);
+  monday.setDate(
+    selectedDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
+  );
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  const fromDate = formatDate(monday);
+  const toDate = formatDate(sunday);
+
+  document.getElementById("result").textContent = `${fromDate} - ${toDate}`;
+  initCalendar(fromDate, toDate);
 };

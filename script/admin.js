@@ -61,6 +61,35 @@ function LogToSheet(message) {
   }
 }
 
+function extractWeekDatesFromSheetName(sheetName) {
+  const match = sheetName.match(
+    /SCHEDULE:\s*(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}\/\d{2}\/\d{4})/
+  );
+  if (!match) {
+    throw new Error(
+      "Tên sheet không đúng định dạng: SCHEDULE:dd/MM/yyyy - dd/MM/yyyy"
+    );
+  }
+
+  const startDateStr = match[1]; // ngày bắt đầu (Monday)
+  const [day, month, year] = startDateStr.split("/").map(Number);
+  const startDate = new Date(year, month - 1, day);
+
+  const result = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    const formatted = Utilities.formatDate(
+      date,
+      Session.getScriptTimeZone(),
+      "dd/MM/yyyy"
+    );
+    result.push(formatted);
+  }
+
+  return result;
+}
+
 // ===============
 
 function doPost(e) {
@@ -72,7 +101,11 @@ function doPost(e) {
 
     var data = JSON.parse(e.postData.contents);
     if (data.type === "handle_student_schedule") {
-      return handleScheduleSheet(data.scheduledData, +data.indexRow);
+      return handleScheduleSheet(
+        data.sheetName,
+        data.scheduledData,
+        +data.indexRow
+      );
     }
   } catch (error) {
     return sendErrorResponse(error.message);
@@ -86,50 +119,36 @@ function doGet(e) {
     return getScheduleSheetData();
   }
 
+  if (type === "get_schedule_by_name") {
+    return getScheduleBySheetName(e.parameter.sheetName);
+  }
+
   return ContentService.createTextOutput(
     JSON.stringify({ success: false, message: "Missing type in parameter" })
   ).setMimeType(ContentService.MimeType.JSON);
 }
 
-function handleScheduleSheet(data, indexRow) {
+function handleScheduleSheet(sheetName, data, indexRow) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  var currentDate = new Date();
-  let dayOfWeek = currentDate.getDay();
-  var monday = new Date(currentDate);
-  monday.setDate(
-    currentDate.getDate() -
-      (currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1)
-  );
-
-  if (dayOfWeek === 6 || dayOfWeek === 0) {
-    monday.setDate(monday.getDate() + 7);
-  }
-
-  var sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-
-  const fromTime = formatDate(monday);
-  const toTime = formatDate(sunday);
+  const weekDates = extractWeekDatesFromSheetName(sheetName);
 
   let headerDates = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    headerDates.push(
-      `${
-        [
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-          "Sunday",
-        ][i]
-      } (${formatDate(d)})`
-    );
-  }
+
+  const days = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
+
+  weekDates.forEach((date, i) => {
+    headerDates.push(`${days[i]} (${date})`);
+    LogToSheet(`${days[i]} (${date})`);
+  });
 
   const headers = [
     "Name",
@@ -142,7 +161,6 @@ function handleScheduleSheet(data, indexRow) {
     ...headerDates,
   ];
 
-  const sheetName = `SCHEDULE: ${fromTime} - ${toTime}`;
   let sheet = ss.getSheetByName(sheetName);
 
   let lastRow = sheet ? sheet.getLastRow() : 0;
@@ -222,28 +240,10 @@ function handleScheduleSheet(data, indexRow) {
   return sendSuccessResponse();
 }
 
-function getScheduleSheetData() {
+function getScheduleBySheetName(sheetName) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const currentDate = new Date();
-
-  // Tính ngày thứ 2 của tuần hiện tại
-  let dayOfWeek = currentDate.getDay();
-  let monday = new Date(currentDate);
-  monday.setDate(currentDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-
-  // Nếu là thứ 7 hoặc CN thì lấy tuần kế tiếp
-  if (dayOfWeek === 6 || dayOfWeek === 0) {
-    monday.setDate(monday.getDate() + 7);
-  }
-
-  let sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-
-  const fromTime = formatDate(monday);
-  const toTime = formatDate(sunday);
-  const sheetName = `SCHEDULE: ${fromTime} - ${toTime}`;
-
   const sheet = ss.getSheetByName(sheetName);
+
   if (!sheet) {
     return sendJsonResponse({
       success: false,

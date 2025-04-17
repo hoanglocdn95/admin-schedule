@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="./assets/q3logo.png" />
-    <title>Sắp xếp lịch học</title>
+    <title>ADMIN-Sắp xếp lịch học</title>
     <link href="./libs/materialize.min.css" rel="stylesheet" />
     <style>
       body {
@@ -233,6 +233,12 @@
           >
             Lịch giảng viên
           </h4>
+          <h5 id="result"></h5>
+
+          <div style="display: flex; align-items: center">
+            <input type="date" id="dateInput" value="new Date()" />
+            <button onclick="showWeekRange()">Hiển thị lịch</button>
+          </div>
         </div>
       </div>
       <div class="trainer-calendar-body">
@@ -331,6 +337,39 @@
           type="button"
           class="btn-floating btn-large red"
           onclick="closeModal()"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+
+    <!-- Thẻ trainer modal -->
+    <div id="trainerModal" class="modal" style="width: 800px">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4>
+            <span id="trainer-modal-name"></span> -
+            <span id="trainer-modal-time"></span>
+          </h4>
+        </div>
+
+        <div class="modal-body">
+          <h5 id="trainer-modal-email"></h5>
+          <hr />
+          <div>
+            <h6>Lịch rảnh</h6>
+            <div id="trainer-modal-schedule"></div>
+            <button id="edit-trainer-schedule">Edit</button>
+            <button id="save-trainer-schedule">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn-floating btn-large red"
+          onclick="closeTrainerModal()"
         >
           Close
         </button>

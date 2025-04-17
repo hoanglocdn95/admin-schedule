@@ -1,13 +1,19 @@
 const SCHEDULE_API_URL =
-  "https://script.google.com/macros/s/AKfycbwtILUETUz9y88i18G0vVdSuS0WtYZnq4P-oP7C3HrtJi_v2SoOU5fy3khec_kL2p38xg/exec";
+  "https://script.google.com/macros/s/AKfycbxpKKS1fHni-dmEpXyGLCreE43qBxJpPiKXHJONLXn2N0vLGwjGNhzbY_ODBIolR4ePvA/exec";
 
 const ACCOUNT_API_URL =
   "https://script.google.com/macros/s/AKfycbxa7-dhPgo48Q3eVKnQjQNKI8oi4ykDfnTzi9hQDSfhGk2SrMBimc1yagzxXLULNs7tYQ/exec";
 
 const ADMIN_API_URL =
-  "https://script.google.com/macros/s/AKfycbwxu7N-pXujHFs_ciMfr6Zv-8GJ6i53cpfN8lymwb6tcRZm1DrCuUsUXscbbAWStKAcww/exec";
+  "https://script.google.com/macros/s/AKfycbwc3t2BdMERBu9GhVmidbXoYw2JH9EUeYxERLqn22NsY3LGmoihFnVhcv0Y12oBVQSSfA/exec";
 
 const REMAIN_TIME_TO_EDIT = 5;
+
+const SHEET_TYPE = {
+  SCHEDULE: "SCHEDULE",
+  TRAINER: "TRAINER",
+  STUDENT: "STUDENT",
+};
 
 let studentData = [];
 let trainerData = [];
@@ -18,6 +24,16 @@ let trainerCalendar = {};
 let scheduleSheetData = [];
 
 const dayOfCurrentWeek = [];
+
+const WEEK = {
+  CURRENT: "current",
+  LAST: "last",
+  NEXT: "next",
+};
+
+let selectedDate = new Date();
+
+let observingWeek = WEEK.CURRENT;
 
 let currentScheduledData = Array.from({ length: 3 }, () => Array(7).fill(""));
 
@@ -102,49 +118,44 @@ function parseSchedule(allData) {
       });
     });
   });
-  console.log(" parseSchedule ~ result:", result);
   return result;
 }
 
-const getStudentCalendar = async () => {
-  await fetch(`${SCHEDULE_API_URL}?type=get_calendar`, {
-    redirect: "follow",
-    method: "GET",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-  })
-    .then(async (response) => {
-      const res = await response.json();
-      if (res.success) {
-        studentCalendar = parseSchedule(res.data);
+const getCalendarByType = async (type) => {
+  try {
+    const response = await fetch(
+      `${SCHEDULE_API_URL}?type=get_calendar&sheetName=${getSheetNames(type)}`,
+      {
+        redirect: "follow",
+        method: "GET",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
       }
-    })
-    .catch((error) => {
-      console.error("Lỗi khi lấy dữ liệu:", error);
-    });
-};
+    );
 
-const getTrainerCalendar = async () => {
-  await fetch(`${SCHEDULE_API_URL}?type=get_trainer_calendar`, {
-    redirect: "follow",
-    method: "GET",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-  })
-    .then(async (response) => {
-      const res = await response.json();
-      if (res.success) {
-        trainerCalendar = parseSchedule(res.data);
-      }
-    })
-    .catch((error) => {
-      console.error("Lỗi khi lấy dữ liệu:", error);
-    });
+    const { success, message, data } = await response.json();
+
+    if (type === SHEET_TYPE.STUDENT) {
+      studentCalendar = success ? parseSchedule(data) : {};
+    } else if (type === SHEET_TYPE.TRAINER) {
+      trainerCalendar = success ? parseSchedule(data) : {};
+    }
+  } catch (error) {
+    console.error(`Lỗi khi lấy dữ liệu ${type}:`, error);
+  }
 };
 
 function generateSchedule(index, day) {
   const scheduleContainer = document.getElementById("modal-schedule");
   scheduleContainer.innerHTML = "";
 
-  const leisureTime = studentData[index].times[day];
+  console.log(" generateSchedule ~ studentData:", {
+    studentData: studentData[index],
+    index,
+    day,
+  });
+  const leisureTime = (studentData[index].times || [])[day];
+  console.log(" generateSchedule ~ leisureTime:", leisureTime);
+  if (!leisureTime) return;
 
   leisureTime.flat().forEach((time, i) => {
     const [start, end] = time.split("-");
@@ -210,7 +221,6 @@ function parseTimeTrainerString(input) {
     const match = line.match(/^(.+?)\s*\((.+)-(.+@.+)\)$/);
 
     if (match) {
-      console.log(" lines.forEach ~ match:", match);
       const time = match[1].trim();
       const name = match[2].trim();
       const email = match[3].trim();
@@ -229,4 +239,173 @@ function parseTimeTrainerString(input) {
   });
 
   return result;
+}
+
+// Hàm clone date và cộng ngày
+const cloneAndOffset = (date, offset) => {
+  let d = new Date(date);
+  d.setDate(d.getDate() + offset);
+  return d;
+};
+
+const formatDate = (date) => {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Tháng bắt đầu từ 0
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+};
+
+function getSheetNames(sheetType) {
+  if (!selectedDate || isNaN(new Date(selectedDate))) {
+    throw new Error("Invalid selectedDate");
+  }
+
+  const selected = new Date(selectedDate);
+  const dayOfWeek = selected.getDay();
+
+  let monday = new Date(selected);
+  monday.setDate(selected.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+
+  // // Nếu là thứ 7 (6) hoặc Chủ nhật (0) thì lấy tuần kế tiếp
+  // if (dayOfWeek === 6 || dayOfWeek === 0) {
+  //   monday.setDate(monday.getDate() + 7);
+  // }
+
+  const mondayWeek = new Date(monday);
+  const sundayWeek = new Date(mondayWeek);
+  sundayWeek.setDate(mondayWeek.getDate() + 6);
+
+  return `${SHEET_TYPE[sheetType]}:${formatDate(mondayWeek)} - ${formatDate(
+    sundayWeek
+  )}`;
+}
+
+const handleStudentData = () => {
+  studentData = studentData.map((s, index) => {
+    console.log(" studentData=studentData.map ~ s:", s);
+    if (studentCalendar[s.email]) {
+      const scheduleCalendar =
+        scheduleSheetData.length > 0 && scheduleSheetData[index]
+          ? scheduleSheetData[index]
+              .slice(-7)
+              .map((i) => parseTimeTrainerString(i))
+          : Array(7).fill([]);
+
+      let status = "";
+      let adminNote = "";
+      if (scheduleSheetData[index]) {
+        status = scheduleSheetData[index][5] || "";
+        adminNote = scheduleSheetData[index][6] || "";
+      }
+
+      studentCalendar[s.email] = { ...studentCalendar[s.email], ...s };
+      return {
+        ...s,
+        times: studentCalendar[s.email].times.map((day) =>
+          day.map((timeRange) => {
+            return convertTimeByTimezone(
+              timeRange,
+              s.timezone,
+              userInfo.timezone
+            );
+          })
+        ),
+        email: studentCalendar[s.email].email,
+        classes: scheduleCalendar,
+        status,
+        adminNote,
+      };
+    }
+    return {
+      ...s,
+      times: Array(7).fill([]),
+      classes: Array(7).fill([]),
+      status: "",
+      adminNote: "",
+    };
+  });
+};
+
+const handleTrainerData = () => {
+  trainerData = trainerData.map((s, index) => {
+    if (trainerCalendar[s.email]) {
+      trainerCalendar[s.email] = { ...trainerCalendar[s.email], ...s };
+      return {
+        ...s,
+        times: trainerCalendar[s.email].times.map((day) =>
+          day.map((timeRange) => {
+            return convertTimeByTimezone(
+              timeRange,
+              s.timezone,
+              userInfo.timezone
+            );
+          })
+        ),
+        email: trainerCalendar[s.email].email,
+      };
+    }
+    return {
+      ...s,
+      times: Array(7).fill([]),
+    };
+  });
+};
+
+function formatDateToString(date) {
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function generateHeaders() {
+  const days = [
+    "Thứ 2",
+    "Thứ 3",
+    "Thứ 4",
+    "Thứ 5",
+    "Thứ 6",
+    "Thứ 7",
+    "Chủ nhật",
+  ];
+
+  let dayOfWeek = selectedDate.getDay();
+  let monday = new Date(selectedDate);
+  monday.setDate(
+    selectedDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
+  );
+
+  let weekDates = [];
+  for (let i = 0; i < 7; i++) {
+    let d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    weekDates.push(formatDateToString(d)); // dd/MM/yyyy
+  }
+
+  let headerRow = document.getElementById("table-header");
+  let trainerHeaderRow = document.getElementById("trainer-table-header");
+
+  headerRow.innerHTML = `<th style="min-width: 135px; background: #07bcd0">Tên</th>`;
+  trainerHeaderRow.innerHTML = `
+    <th style="min-width: 135px; background: #1e00ff; color: #ffffff">Tên</th>
+  `;
+  dayOfCurrentWeek.length = 0; // Clear global if used
+
+  weekDates.forEach((date, i) => {
+    let th = document.createElement("th");
+    let thTrainer = document.createElement("th");
+
+    const dayText = `${days[i]} (${date})`;
+    dayOfCurrentWeek.push(dayText);
+
+    th.textContent = dayText;
+    th.className = "th-day";
+    headerRow.appendChild(th);
+
+    thTrainer.textContent = dayText;
+    thTrainer.className = "th-day";
+    thTrainer.style.backgroundColor = "#36e13c";
+    trainerHeaderRow.appendChild(thTrainer);
+  });
 }
