@@ -401,7 +401,6 @@ const closeModal = () => {
 
 const saveClasses = (index, day) => {
   const schedule = studentData[index].classes?.[day] || [];
-  console.log(" saveClasses ~ schedule:", schedule);
 
   if (schedule.length === 0) {
     M.toast({

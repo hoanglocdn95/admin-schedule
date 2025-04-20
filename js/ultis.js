@@ -5,7 +5,7 @@ const ACCOUNT_API_URL =
   "https://script.google.com/macros/s/AKfycbxa7-dhPgo48Q3eVKnQjQNKI8oi4ykDfnTzi9hQDSfhGk2SrMBimc1yagzxXLULNs7tYQ/exec";
 
 const ADMIN_API_URL =
-  "https://script.google.com/macros/s/AKfycbwc3t2BdMERBu9GhVmidbXoYw2JH9EUeYxERLqn22NsY3LGmoihFnVhcv0Y12oBVQSSfA/exec";
+  "https://script.google.com/macros/s/AKfycbyKCKBT7dgqAk0IxKt-ZTdY4Fx2i10bJxH0OHnWw-C76iRg9ffsDT9JAVGfXP05EdpxaQ/exec";
 
 const REMAIN_TIME_TO_EDIT = 5;
 
@@ -148,13 +148,7 @@ function generateSchedule(index, day) {
   const scheduleContainer = document.getElementById("modal-schedule");
   scheduleContainer.innerHTML = "";
 
-  console.log(" generateSchedule ~ studentData:", {
-    studentData: studentData[index],
-    index,
-    day,
-  });
   const leisureTime = (studentData[index].times || [])[day];
-  console.log(" generateSchedule ~ leisureTime:", leisureTime);
   if (!leisureTime) return;
 
   leisureTime.flat().forEach((time, i) => {
@@ -283,7 +277,6 @@ function getSheetNames(sheetType) {
 
 const handleStudentData = () => {
   studentData = studentData.map((s, index) => {
-    console.log(" studentData=studentData.map ~ s:", s);
     if (studentCalendar[s.email]) {
       const scheduleCalendar =
         scheduleSheetData.length > 0 && scheduleSheetData[index]

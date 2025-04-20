@@ -1,5 +1,5 @@
 const ACCOUNT_API_URL =
-  "https://script.google.com/macros/s/AKfycbytD-SM2ZqlC_8ZealODSCynhWbauexL3JENPDczagcC_B5zcz2Epn8cOqxbQQ3w-Zijw/exec";
+  "https://script.google.com/macros/s/AKfycbxa7-dhPgo48Q3eVKnQjQNKI8oi4ykDfnTzi9hQDSfhGk2SrMBimc1yagzxXLULNs7tYQ/exec";
 
 const loadingOverlay = document.getElementById("loadingOverlay");
 
