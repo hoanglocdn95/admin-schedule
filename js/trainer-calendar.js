@@ -200,7 +200,7 @@ function generateTrainerTableBody() {
           saveScheduleBtn.style.visibility = "unset";
           this.innerText = "Add";
         } else {
-          addSchedule(index, day);
+          addTrainerSchedule(index, day);
         }
       };
 
@@ -273,4 +273,43 @@ function saveTrainerSchedule(index, day) {
     });
     return;
   }
+}
+
+function addTrainerSchedule(index, day) {
+  const trainerScheduleContainer = document.getElementById(
+    "trainer-modal-schedule"
+  );
+
+  if (!trainerData[index].times) return;
+
+  const leisureTime = trainerData[index].times[day];
+
+  trainerData[index].times[day].push("");
+
+  const row = document.createElement("div");
+  row.innerHTML = `
+          <label>Khung giờ ${leisureTime.length}:</label>
+          Từ
+          <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00" 
+            onchange="handleTrainerScheduleTimeChange(this, ${index}, ${day}, ${
+    leisureTime.length - 1
+  }, 'pre')"
+          
+          />
+          đến
+          <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00" 
+            onchange="handleTrainerScheduleTimeChange(this, ${index}, ${day}, ${
+    leisureTime.length - 1
+  }, 'post')"
+          />
+          <button 
+            data-index="${index}"
+            data-day="${day}"
+            data-timeIndex="${leisureTime.length - 1}"
+            onclick="deleteTrainerTime(${index}, ${day}, ${
+    leisureTime.length - 1
+  })"
+          >Delete</button>
+        `;
+  trainerScheduleContainer.appendChild(row);
 }
