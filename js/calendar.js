@@ -30,7 +30,6 @@ function generateTableBody() {
         ? `
         <div class="student-cell"
             data-email="${stu.email}"
-            data-email="${stu.email}"
             data-day="${i}"
             data-name="${stu.name}"
             data-index="${index}"
@@ -44,7 +43,6 @@ function generateTableBody() {
       `
         : `
         <div class="student-cell"
-            data-email="${stu.email}"
             data-email="${stu.email}"
             data-day="${i}"
             data-name="${stu.name}"
@@ -521,7 +519,7 @@ function saveStudentSchedule(index, day) {
 
 function convertSchedule(inputArray, timezone) {
   const periods = [
-    { label: "Sáng (8:00 - 12:00)*", start: 8 * 60, end: 12 * 60 },
+    { label: "Sáng (7:00 - 12:00)*", start: 7 * 60, end: 12 * 60 },
     { label: "Chiều (12:00 - 17:00)", start: 12 * 60, end: 17 * 60 },
     { label: "Tối (17:00 - 23:00)", start: 17 * 60, end: 23 * 60 },
   ];

@@ -126,32 +126,41 @@ function generateTrainerTableBody() {
   let tbody = document.getElementById("trainer-table-body");
   tbody.innerHTML = "";
 
-  trainerData.forEach((stu, index) => {
+  trainerData.forEach((tra, index) => {
     let tr = document.createElement("tr");
     let td = document.createElement("td");
 
-    td.innerHTML = `${stu.name} <br /> ${stu.timezone}`;
+    td.innerHTML = `${tra.name} <br /> ${tra.timezone}`;
     td.style = "background: #07bcd0; font-weight: bold; z-index: 1;";
     tr.appendChild(td);
 
     for (let i = 0; i <= 6; i++) {
       let tdInput = document.createElement("td");
       tdInput.style.padding = 0;
-      const timesString = stu.times ? stu.times[i].join(", ") : "";
+      const timesString = tra.times ? tra.times[i].join(", ") : "";
 
       const htmlContent = timesString
         ? `
         <div class="trainer-cell"
-            data-email="${stu.email}"
+            data-email="${tra.email}"
             data-day="${i}"
-            data-name="${stu.name}"
+            data-name="${tra.name}"
             data-index="${index}"
         >
           <h6>Thời gian rảnh:</h6>
           <p>${timesString}</p>
         </div>
       `
-        : "";
+        : `
+        <div class="trainer-cell"
+            data-email="${tra.email}"
+            data-day="${i}"
+            data-name="${tra.name}"
+            data-index="${index}"
+        >
+          <p>---</p>
+        </div>
+      `;
 
       tdInput.innerHTML = htmlContent;
 

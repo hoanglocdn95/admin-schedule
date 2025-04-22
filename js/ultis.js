@@ -261,11 +261,6 @@ function getSheetNames(sheetType) {
   let monday = new Date(selected);
   monday.setDate(selected.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
 
-  // // Nếu là thứ 7 (6) hoặc Chủ nhật (0) thì lấy tuần kế tiếp
-  // if (dayOfWeek === 6 || dayOfWeek === 0) {
-  //   monday.setDate(monday.getDate() + 7);
-  // }
-
   const mondayWeek = new Date(monday);
   const sundayWeek = new Date(mondayWeek);
   sundayWeek.setDate(mondayWeek.getDate() + 6);
@@ -312,8 +307,12 @@ const handleStudentData = () => {
     }
     return {
       ...s,
-      times: Array(7).fill([]),
-      classes: Array(7).fill([]),
+      times: Array(7)
+        .fill(null)
+        .map(() => []),
+      classes: Array(7)
+        .fill(null)
+        .map(() => []),
       status: "",
       adminNote: "",
     };
@@ -340,7 +339,9 @@ const handleTrainerData = () => {
     }
     return {
       ...s,
-      times: Array(7).fill([]),
+      times: Array(7)
+        .fill(null)
+        .map(() => []),
     };
   });
 };
