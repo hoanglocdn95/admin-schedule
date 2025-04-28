@@ -100,7 +100,6 @@ function doGet(e) {
 }
 
 function handleScheduleSheet(sheetName, data, indexRow) {
-  LogToSheet(`~ sheetName: ${sheetName}`);
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const weekDates = extractWeekDatesFromSheetName(sheetName);
 

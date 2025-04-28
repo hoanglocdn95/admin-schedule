@@ -278,7 +278,9 @@ const handleStudentData = () => {
           ? scheduleSheetData[index]
               .slice(-7)
               .map((i) => parseTimeTrainerString(i))
-          : Array(7).fill([]);
+          : Array(7)
+              .fill(null)
+              .map(() => []);
 
       let status = "";
       let adminNote = "";

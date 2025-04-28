@@ -290,14 +290,14 @@ function addTrainerSchedule(index, day) {
   row.innerHTML = `
           <label>Khung giờ ${leisureTime.length}:</label>
           Từ
-          <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00" 
+          <input type="time" style="width: fit-content" step="900" min="07:00" min="24:00" 
             onchange="handleTrainerScheduleTimeChange(this, ${index}, ${day}, ${
     leisureTime.length - 1
   }, 'pre')"
           
           />
           đến
-          <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00" 
+          <input type="time" style="width: fit-content" step="900" min="07:00" min="24:00" 
             onchange="handleTrainerScheduleTimeChange(this, ${index}, ${day}, ${
     leisureTime.length - 1
   }, 'post')"

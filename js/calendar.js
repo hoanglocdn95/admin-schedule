@@ -117,7 +117,8 @@ function generateTableBody() {
 
       generateRegisterClass(index, day);
 
-      const sessionQuantity = document.getElementById("session-quantity");
+      const sessionQuantity = document.querySelector(".session-quantity");
+
       sessionQuantity.value =
         studentData[index].classes && studentData[index].classes.length > 0
           ? studentData[index].classes[day].length + ""
@@ -126,12 +127,12 @@ function generateTableBody() {
       sessionQuantity.addEventListener("change", function () {
         const currentClasses = studentData[index].classes[day];
         const tmp = Array(+this.value)
-          .fill({ time: "", trainerName: "", color: "", trainerEmail: "" })
-          .map((c, i) => {
+          .fill(null)
+          .map((_, i) => {
             if (currentClasses[i]) {
               return { ...currentClasses[i] };
             }
-            return c;
+            return { time: "", trainerName: "", color: "", trainerEmail: "" };
           });
 
         studentData[index].classes[day] = [...tmp];
@@ -213,12 +214,12 @@ function generateRegisterClass(index, day) {
     const settingSession = `
               <div>
                 Từ
-                <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00" 
+                <input type="time" style="width: fit-content" step="900" min="07:00" max="24:00" 
                   value="${formatTime(start.trim())}"
                   onchange="handleClassesTimeChange(this, ${index}, ${day}, ${i}, 'pre')"
                 />
                 đến
-                <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00" 
+                <input type="time" style="width: fit-content" step="900" min="07:00" max="24:00" 
                   value="${formatTime(end.trim())}"
                   onchange="handleClassesTimeChange(this, ${index}, ${day}, ${i}, 'post')"
                 />
@@ -301,12 +302,12 @@ function generateScheduleEdit(index, day) {
     row.innerHTML = `
           <label>Khung giờ ${i + 1}:</label>
           Từ
-          <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00"
+          <input type="time" style="width: fit-content" step="900" min="07:00" min="24:00"
             value="${formatTime(start.trim())}"
             onchange="handleScheduleTimeChange(this, ${index}, ${day}, ${i}, 'pre')"
           />
           đến
-          <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00"
+          <input type="time" style="width: fit-content" step="900" min="07:00" min="24:00"
             value="${formatTime(end.trim())}"
             onchange="handleScheduleTimeChange(this, ${index}, ${day}, ${i}, 'post')"
           />
@@ -334,14 +335,14 @@ function addSchedule(index, day) {
   row.innerHTML = `
           <label>Khung giờ ${leisureTime.length}:</label>
           Từ
-          <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00" 
+          <input type="time" style="width: fit-content" step="900" min="07:00" min="24:00" 
             onchange="handleScheduleTimeChange(this, ${index}, ${day}, ${
     leisureTime.length - 1
   }, 'pre')"
           
           />
           đến
-          <input type="time" style="width: fit-content" step="900" min="08:00" max="23:00" 
+          <input type="time" style="width: fit-content" step="900" min="07:00" min="24:00" 
             onchange="handleScheduleTimeChange(this, ${index}, ${day}, ${
     leisureTime.length - 1
   }, 'post')"
@@ -521,7 +522,7 @@ function convertSchedule(inputArray, timezone) {
   const periods = [
     { label: "Sáng (7:00 - 12:00)*", start: 7 * 60, end: 12 * 60 },
     { label: "Chiều (12:00 - 17:00)", start: 12 * 60, end: 17 * 60 },
-    { label: "Tối (17:00 - 23:00)", start: 17 * 60, end: 23 * 60 },
+    { label: "Tối (17:00 - 24:00)", start: 17 * 60, end: 24 * 60 },
   ];
 
   // Khởi tạo mảng 3 periods, mỗi period có 7 ngày là chuỗi rỗng
