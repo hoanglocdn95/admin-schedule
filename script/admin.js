@@ -132,7 +132,7 @@ function handleScheduleSheet(sheetName, data, indexRow) {
     sheet = ss.insertSheet(sheetName);
     isNewSheet = true;
 
-    // Setup tiêu đề
+    // Tiêu đề
     sheet
       .getRange("A1:C1")
       .merge()
@@ -157,9 +157,8 @@ function handleScheduleSheet(sheetName, data, indexRow) {
 
   if (data && data.length > 0) {
     if (isNewSheet) {
-      // ✅ Ghi toàn bộ data nếu sheet mới
+      // Ghi toàn bộ nếu sheet mới
       sheet.getRange(6, 1, data.length, headers.length).setValues(data);
-
       for (let row = 6; row < 6 + data.length; row++) {
         for (let col = 8; col <= 14; col++) {
           const cell = sheet.getRange(row, col);
@@ -168,8 +167,15 @@ function handleScheduleSheet(sheetName, data, indexRow) {
         }
       }
     } else {
-      // ✅ Chỉ cập nhật 1 dòng nếu sheet đã có
-      const targetRow = sheet.getLastRow() < indexRow + 6 ? 6 : indexRow + 6;
+      const targetRow = indexRow + 6;
+      const currentLastRow = sheet.getLastRow();
+
+      // Nếu dòng chưa tồn tại → thêm dòng mới
+      if (targetRow > currentLastRow) {
+        sheet.insertRowsAfter(currentLastRow, targetRow - currentLastRow);
+      }
+
+      // Ghi dữ liệu
       sheet
         .getRange(targetRow, 1, 1, headers.length)
         .setValues([data[indexRow]]);

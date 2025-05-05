@@ -5,7 +5,7 @@ const ACCOUNT_API_URL =
   "https://script.google.com/macros/s/AKfycbxa7-dhPgo48Q3eVKnQjQNKI8oi4ykDfnTzi9hQDSfhGk2SrMBimc1yagzxXLULNs7tYQ/exec";
 
 const ADMIN_API_URL =
-  "https://script.google.com/macros/s/AKfycbyKCKBT7dgqAk0IxKt-ZTdY4Fx2i10bJxH0OHnWw-C76iRg9ffsDT9JAVGfXP05EdpxaQ/exec";
+  "https://script.google.com/macros/s/AKfycby1OScWjdvUvt98LgX6G19EUy--UsuMJMCwpT3vjSl3HPZh4SGUbnh71oyr1HbSZsyFRg/exec";
 
 const REMAIN_TIME_TO_EDIT = 5;
 
