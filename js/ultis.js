@@ -50,6 +50,23 @@ function formatTime(value) {
   return value && value.length < 5 ? "0" + value : value;
 }
 
+function getTimezoneOffsetInMinutes(tz1, tz2) {
+  const now = new Date();
+
+  const offset1 = getOffset(now, tz1); // minutes
+  const offset2 = getOffset(now, tz2);
+
+  return offset2 - offset1;
+}
+
+function getOffset(date, timezone) {
+  const formatted = Utilities.formatDate(date, timezone, "Z"); // e.g. +0930 or -0400
+  const sign = formatted[0] === "+" ? 1 : -1;
+  const hours = parseInt(formatted.slice(1, 3), 10);
+  const minutes = parseInt(formatted.slice(3, 5), 10);
+  return sign * (hours * 60 + minutes);
+}
+
 function logout() {
   sessionStorage.clear();
   window.location.href = "index.html";
@@ -207,7 +224,7 @@ const convertTimeByTimezone = (timeRange, originTimezone, targetTimezone) => {
   return convertTimeRange(timeRange, offsetDiff);
 };
 
-function parseTimeTrainerString(input) {
+function parseTimeTrainerString(input, studentTimezone) {
   const lines = input.split("\n");
   const result = [];
 
@@ -216,13 +233,16 @@ function parseTimeTrainerString(input) {
 
     if (match) {
       const time = match[1].trim();
+      const convertedTime = time
+        ? convertTimeByTimezone(time, studentTimezone, userInfo.timezone)
+        : "";
       const name = match[2].trim();
       const email = match[3].trim();
       const color =
         trainerData.filter((tr) => tr.email === email)[0]?.color || "#000000";
 
       result.push({
-        time,
+        time: convertedTime,
         trainerName: name,
         trainerEmail: email,
         color,
@@ -277,7 +297,7 @@ const handleStudentData = () => {
         scheduleSheetData.length > 0 && scheduleSheetData[index]
           ? scheduleSheetData[index]
               .slice(-7)
-              .map((i) => parseTimeTrainerString(i))
+              .map((i) => parseTimeTrainerString(i, s.timezone))
           : Array(7)
               .fill(null)
               .map(() => []);
@@ -294,11 +314,12 @@ const handleStudentData = () => {
         ...s,
         times: studentCalendar[s.email].times.map((day) =>
           day.map((timeRange) => {
-            return convertTimeByTimezone(
+            const convertedTime = convertTimeByTimezone(
               timeRange,
               s.timezone,
               userInfo.timezone
             );
+            return convertedTime;
           })
         ),
         email: studentCalendar[s.email].email,

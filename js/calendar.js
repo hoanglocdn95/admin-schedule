@@ -20,7 +20,7 @@ function generateTableBody() {
         ? stu.classes[i]
             .map((classItem, i) => {
               return `
-          <p>${classItem.time} - ${classItem.trainerName}</p>
+          <p style="background-color: ${classItem.color}; color: white; padding: 2px; border-radius: 5px;">${classItem.time} - ${classItem.trainerName}</p>
         `;
             })
             .join("")
@@ -525,12 +525,13 @@ function convertSchedule(inputArray, timezone) {
     { label: "Tối (17:00 - 24:00)", start: 17 * 60, end: 24 * 60 },
   ];
 
-  // Khởi tạo mảng 3 periods, mỗi period có 7 ngày là chuỗi rỗng
   const output = Array.from({ length: 3 }, () =>
     Array.from({ length: 7 }, () => [])
   );
 
   const timeRegex = /^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/;
+
+  const offsetMinutes = getTimezoneOffsetInMinutes(userInfo.timezone, timezone);
 
   inputArray.forEach((dayArray, dayIndex) => {
     if (!Array.isArray(dayArray)) return;
@@ -554,17 +555,29 @@ function convertSchedule(inputArray, timezone) {
       const start = sh * 60 + sm;
       const end = eh * 60 + em;
 
-      if (start >= end) {
-        throw new Error(`Giờ bắt đầu phải nhỏ hơn giờ kết thúc: ${timeRange}`);
+      let adjustedEnd = end;
+
+      // ✅ Cho phép end < start nếu đúng do chênh lệch timezone
+      if (end <= start) {
+        const actualDiff = end + 1440 - start;
+        if (actualDiff !== offsetMinutes) {
+          throw new Error(`Khung giờ không hợp lệ: ${timeRange}`);
+        }
+        adjustedEnd = end + 1440;
       }
 
-      // Tìm period phù hợp nhất (giao nhau lớn nhất)
+      const duration = adjustedEnd - start;
+      if (duration <= 0 || duration > 1440) {
+        throw new Error(`Khoảng thời gian không hợp lệ: ${timeRange}`);
+      }
+
+      // ✅ Xác định period phù hợp nhất trong ngày hiện tại (0h–24h)
       let bestMatch = -1;
       let maxOverlap = -1;
 
       periods.forEach((period, i) => {
         const overlapStart = Math.max(start, period.start);
-        const overlapEnd = Math.min(end, period.end);
+        const overlapEnd = Math.min(Math.min(end, 1440), period.end); // giới hạn trong ngày
         const overlap = Math.max(0, overlapEnd - overlapStart);
 
         if (overlap > maxOverlap || (overlap === maxOverlap && i > bestMatch)) {
@@ -579,7 +592,6 @@ function convertSchedule(inputArray, timezone) {
     });
   });
 
-  // Chuyển mảng thời gian từng ô thành chuỗi
   return output.map((periodRow) =>
     periodRow.map((dayCell) => dayCell.join(", "))
   );
