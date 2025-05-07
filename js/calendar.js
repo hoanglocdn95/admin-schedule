@@ -518,66 +518,49 @@ function saveStudentSchedule(index, day) {
   }
 }
 
-function convertSchedule(inputArray, timezone) {
+function convertSchedule(inputArray, targetTimezone) {
   const periods = [
     { label: "Sáng (7:00 - 12:00)*", start: 7 * 60, end: 12 * 60 },
     { label: "Chiều (12:00 - 17:00)", start: 12 * 60, end: 17 * 60 },
     { label: "Tối (17:00 - 24:00)", start: 17 * 60, end: 24 * 60 },
   ];
 
+  // Khởi tạo mảng output
   const output = Array.from({ length: 3 }, () =>
     Array.from({ length: 7 }, () => [])
   );
 
-  const timeRegex = /^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/;
+  const userOffset = getOffset(userInfo.timezone);
+  const targetOffset = getOffset(targetTimezone);
+  const offsetMinutes = targetOffset - userOffset;
 
-  const offsetMinutes = getTimezoneOffsetInMinutes(userInfo.timezone, timezone);
+  const timeRegex = /^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/;
 
   inputArray.forEach((dayArray, dayIndex) => {
     if (!Array.isArray(dayArray)) return;
 
     dayArray.forEach((time) => {
-      const timeRange = time
-        ? convertTimeByTimezone(time, userInfo.timezone, timezone)
-        : "";
-      if (!timeRange || typeof timeRange !== "string") {
-        throw new Error(
-          "Dữ liệu khung giờ không hợp lệ (trống hoặc sai kiểu)."
-        );
-      }
+      if (!time || typeof time !== "string") return;
 
-      const match = timeRange.trim().match(timeRegex);
+      const match = time.trim().match(timeRegex);
       if (!match) {
-        throw new Error(`Định dạng không hợp lệ: ${timeRange}`);
+        throw new Error(`Định dạng không hợp lệ: ${time}`);
       }
 
       const [, sh, sm, eh, em] = match.map(Number);
-      const start = sh * 60 + sm;
-      const end = eh * 60 + em;
+      let start = sh * 60 + sm + offsetMinutes;
+      let end = eh * 60 + em + offsetMinutes;
 
-      let adjustedEnd = end;
+      // Normalize time range: nếu end <= start → qua ngày hôm sau → +24h
+      if (end <= start) end += 24 * 60;
 
-      // ✅ Cho phép end < start nếu đúng do chênh lệch timezone
-      if (end <= start) {
-        const actualDiff = end + 1440 - start;
-        if (actualDiff !== offsetMinutes) {
-          throw new Error(`Khung giờ không hợp lệ: ${timeRange}`);
-        }
-        adjustedEnd = end + 1440;
-      }
-
-      const duration = adjustedEnd - start;
-      if (duration <= 0 || duration > 1440) {
-        throw new Error(`Khoảng thời gian không hợp lệ: ${timeRange}`);
-      }
-
-      // ✅ Xác định period phù hợp nhất trong ngày hiện tại (0h–24h)
+      // Tìm period có overlap lớn nhất
       let bestMatch = -1;
       let maxOverlap = -1;
 
       periods.forEach((period, i) => {
         const overlapStart = Math.max(start, period.start);
-        const overlapEnd = Math.min(Math.min(end, 1440), period.end); // giới hạn trong ngày
+        const overlapEnd = Math.min(end, period.end);
         const overlap = Math.max(0, overlapEnd - overlapStart);
 
         if (overlap > maxOverlap || (overlap === maxOverlap && i > bestMatch)) {
@@ -587,11 +570,14 @@ function convertSchedule(inputArray, timezone) {
       });
 
       if (bestMatch !== -1) {
-        output[bestMatch][dayIndex].push(timeRange);
+        output[bestMatch][dayIndex].push(
+          convertTimeByTimezone(time, userInfo.timezone, targetTimezone)
+        );
       }
     });
   });
 
+  // Trả về mảng output dạng string
   return output.map((periodRow) =>
     periodRow.map((dayCell) => dayCell.join(", "))
   );

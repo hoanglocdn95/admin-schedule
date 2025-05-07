@@ -50,21 +50,13 @@ function formatTime(value) {
   return value && value.length < 5 ? "0" + value : value;
 }
 
-function getTimezoneOffsetInMinutes(tz1, tz2) {
-  const now = new Date();
-
-  const offset1 = getOffset(now, tz1); // minutes
-  const offset2 = getOffset(now, tz2);
-
-  return offset2 - offset1;
-}
-
-function getOffset(date, timezone) {
-  const formatted = Utilities.formatDate(date, timezone, "Z"); // e.g. +0930 or -0400
-  const sign = formatted[0] === "+" ? 1 : -1;
-  const hours = parseInt(formatted.slice(1, 3), 10);
-  const minutes = parseInt(formatted.slice(3, 5), 10);
-  return sign * (hours * 60 + minutes);
+// Hàm hỗ trợ lấy offset từ timezone string như "GMT +09:30"
+function getOffset(tz) {
+  const match = tz.match(/GMT\s*([+-])(\d{1,2}):(\d{2})/i);
+  if (!match) return 0;
+  const [, sign, h, m] = match;
+  const offset = parseInt(h) * 60 + parseInt(m);
+  return sign === "+" ? offset : -offset;
 }
 
 function logout() {
