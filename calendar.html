@@ -20,9 +20,12 @@
 
       .calendar-container {
         background-color: #faf2eb;
-        height: 100%;
-        min-height: 100vh;
+        height: calc(100vh - 280px);
         margin-top: 60px;
+      }
+
+      .calendar-container > form {
+        height: 100%;
       }
 
       .trainer-calendar-container {
@@ -89,14 +92,22 @@
         z-index: 2000;
       }
       .th-day {
-        min-width: 130px;
+        width: 200px;
+        min-width: 200px;
+        max-width: 200px;
+        position: sticky;
+        top: 0;
+        z-index: 1;
       }
+
       .trainer-calendar-table,
       .table-container {
         width: calc(100% - 40px);
-        overflow-x: auto;
+        overflow: auto;
         margin: 0 20px;
         border: solid;
+        /* height: calc(100vh - 237px); */
+        height: 100%;
       }
 
       .title {
@@ -247,7 +258,12 @@
             <thead>
               <tr id="trainer-table-header">
                 <th
-                  style="min-width: 135px; background: #1e00ff; color: #ffffff"
+                  style="
+                    min-width: 135px;
+                    background: #1e00ff;
+                    color: #ffffff;
+                    z-index: 1;
+                  "
                 >
                   Tên
                 </th>
@@ -278,7 +294,6 @@
             <tbody id="table-body"></tbody>
           </table>
         </div>
-        <div id="btn-send" class="center" style="padding: 20px"></div>
       </form>
     </div>
 

@@ -395,9 +395,9 @@ function generateHeaders() {
   let headerRow = document.getElementById("table-header");
   let trainerHeaderRow = document.getElementById("trainer-table-header");
 
-  headerRow.innerHTML = `<th style="min-width: 135px; background: #07bcd0">Tên</th>`;
+  headerRow.innerHTML = `<th style="min-width: 135px; background: #07bcd0; z-index: 2; position:sticky; top: 0; left: 0">Tên</th>`;
   trainerHeaderRow.innerHTML = `
-    <th style="min-width: 135px; background: #1e00ff; color: #ffffff">Tên</th>
+    <th style="min-width: 135px; background: #1e00ff; color: #ffffff; z-index: 2; position:sticky; top: 0; left: 0;">Tên</th>
   `;
   dayOfCurrentWeek.length = 0; // Clear global if used
 
