@@ -1,28 +1,5 @@
 document.addEventListener("DOMContentLoaded", async function () {});
 
-function toggleScheduleTrainer(btn) {
-  const trainerCalendarBody = document.querySelector(".trainer-calendar-body");
-  const trainerCalendarContainer = document.querySelector(
-    ".trainer-calendar-container"
-  );
-  const calendarContainer = document.querySelector(".calendar-container");
-  const tableContainer = document.querySelector(".table-container");
-
-  if (btn.innerText === "Ẩn") {
-    btn.innerText = "Hiện";
-    trainerCalendarBody.style.display = "none";
-    trainerCalendarContainer.style.height = "fit-content";
-
-    calendarContainer.style.height = "calc(100vh - 280px)";
-  } else {
-    btn.innerText = "Ẩn";
-    trainerCalendarBody.style.display = "block";
-    trainerCalendarContainer.style.height = "calc(100vh / 2 - 30px)";
-
-    calendarContainer.style.height = "calc(100vh / 2 - 134px)";
-  }
-}
-
 function closeTrainerModal() {
   M.Modal.getInstance(document.getElementById("trainerModal")).close();
 }

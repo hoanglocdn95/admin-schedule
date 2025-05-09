@@ -25,6 +25,9 @@ let scheduleSheetData = [];
 
 const dayOfCurrentWeek = [];
 
+let isShowTrainer = true;
+let isShowStudent = true;
+
 const WEEK = {
   CURRENT: "current",
   LAST: "last",
@@ -74,6 +77,70 @@ function addUserInfoToSchedule(scheduleData, email, name, timezone) {
       return cell;
     })
   );
+}
+
+function toggleScheduleTrainer(btn) {
+  const trainerCalendarContainer = document.querySelector(
+    ".trainer-calendar-container"
+  );
+  const studentCalendarContainer = document.querySelector(
+    ".student-calendar-container"
+  );
+  const toggleStudentBtn = document.getElementById("toggle-student-btn");
+  if (isShowTrainer) {
+    if (isShowStudent) {
+      btn.innerText = "Show Trainer";
+      isShowTrainer = false;
+      trainerCalendarContainer.style.width = "0";
+      studentCalendarContainer.style.width = "100%";
+    } else {
+      btn.innerText = "Show Trainer";
+      studentCalendarContainer.style.width = "100%";
+      trainerCalendarContainer.style.width = "0";
+      toggleStudentBtn.innerText = "Hide Student";
+    }
+  } else {
+    btn.innerText = "Hide Trainer";
+    isShowTrainer = true;
+    if (isShowStudent) {
+      trainerCalendarContainer.style.width = "50%";
+      studentCalendarContainer.style.width = "50%";
+    } else {
+      trainerCalendarContainer.style.width = "100%";
+    }
+  }
+}
+
+function toggleScheduleStudent(btn) {
+  const toggleTrainerBtn = document.getElementById("toggle-trainer-btn");
+  const trainerCalendarContainer = document.querySelector(
+    ".trainer-calendar-container"
+  );
+  const studentCalendarContainer = document.querySelector(
+    ".student-calendar-container"
+  );
+  if (isShowStudent) {
+    if (isShowTrainer) {
+      isShowStudent = false;
+      btn.innerText = "Show Student";
+      trainerCalendarContainer.style.width = "100%";
+      studentCalendarContainer.style.width = "0";
+    } else {
+      btn.innerText = "Show Student";
+      trainerCalendarContainer.style.width = "100%";
+      studentCalendarContainer.style.width = "0";
+      toggleTrainerBtn.innerText = "Hide Trainer";
+    }
+  } else {
+    btn.innerText = "Hide Student";
+    isShowStudent = true;
+    if (isShowTrainer) {
+      trainerCalendarContainer.style.width = "50%";
+      studentCalendarContainer.style.width = "50%";
+    } else {
+      studentCalendarContainer.style.width = "100%";
+    }
+  }
 }
 
 const getAllUser = async () => {
@@ -418,3 +485,25 @@ function generateHeaders() {
     trainerHeaderRow.appendChild(thTrainer);
   });
 }
+
+const showWeekRange = () => {
+  const dateStr = document.getElementById("dateInput").value;
+  if (!dateStr) return;
+
+  selectedDate = new Date(dateStr);
+  const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, ...
+
+  const monday = new Date(selectedDate);
+  monday.setDate(
+    selectedDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
+  );
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  const fromDate = formatDate(monday);
+  const toDate = formatDate(sunday);
+
+  document.getElementById("result").textContent = `${fromDate} - ${toDate}`;
+  initCalendar(fromDate, toDate);
+};

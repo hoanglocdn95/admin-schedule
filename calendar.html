@@ -19,23 +19,26 @@
       }
 
       .calendar-container {
-        background-color: #faf2eb;
-        height: calc(100vh - 280px);
-        margin-top: 60px;
+        margin-top: 156px;
+        display: flex;
+        position: relative;
       }
 
-      .calendar-container > form {
-        height: 100%;
-      }
-
+      .student-calendar-container,
       .trainer-calendar-container {
+        width: 50%;
         background-color: #faf2eb;
-        height: fit-content;
-        position: sticky;
-        top: 60px;
-        z-index: 15;
-        overflow-y: auto;
-        border-bottom: solid;
+        height: calc(100vh - 226px);
+      }
+
+      .student-calendar-container {
+        border-left: 2px solid #fe9801;
+      }
+      .trainer-calendar-container {
+        border-right: 2px solid #07bdd0;
+      }
+      .trainer-calendar-body {
+        height: 100%;
       }
 
       table {
@@ -102,33 +105,51 @@
 
       .trainer-calendar-table,
       .table-container {
-        width: calc(100% - 40px);
+        width: calc(100% - 16px);
+        width: 100%;
         overflow: auto;
-        margin: 0 20px;
         border: solid;
-        /* height: calc(100vh - 237px); */
         height: 100%;
       }
 
       .title {
         margin: 0 auto;
         width: fit-content;
-        padding: 20px;
-      }
-      .guide {
-        margin: 0 20px;
-        padding-top: 20px;
-      }
-      .trainer-guide,
-      .guide p {
-        font-size: 16px;
+        padding: 16px;
+        color: #ff9800;
       }
 
-      .trainer-guide {
-        position: sticky;
-        top: 0;
-        z-index: 16;
+      .calendar-guide > p {
+        font-size: 16px;
+        line-height: 20px;
+        color: #ff9800;
+        min-width: 370px;
+        max-width: 500px;
+      }
+
+      .calendar-guide {
+        padding: 16px 24px;
         background: #faf2ea;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .calendar-select {
+        display: flex;
+        align-items: center;
+        margin-left: 24px;
+      }
+
+      .calendar-select-result {
+        color: #000;
+        min-width: 280px;
+      }
+
+      .calendar-select-result > p {
+        color: #1e00ff;
+        font-size: 16px;
+        line-height: 22px;
       }
 
       .nav-bar {
@@ -136,6 +157,7 @@
         top: 0px;
         left: 0px;
         z-index: 10;
+        height: fit-content;
       }
       .nav-bar a {
         font-size: 20px;
@@ -195,8 +217,26 @@
         margin: 0px !important;
       }
 
-      .trainer-calendar-body {
-        display: none;
+      .toggle-schedule-trainer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .toggle-schedule-trainer > button {
+        background-color: #ff9700;
+        color: #ffffff;
+        border-radius: 4px;
+        padding: 6px 8px;
+        cursor: pointer;
+        margin-bottom: 4px;
+      }
+      .adminNote-label {
+        color: #ffffff;
+      }
+      .adminNote-value {
+        color: "#ff9700";
       }
     </style>
   </head>
@@ -219,6 +259,11 @@
             <a>Calendar</a>
           </li>
         </ul>
+        <div style="display: flex; align-items: center">
+          <h5 style="margin-right: 8px; color: #07bdd0">Xin chào</h5>
+          <h5 id="admin-name"></h5>
+        </div>
+
         <button
           class="btn-small cyan waves-effect waves-light"
           style="margin-right: 16px; border-radius: 4px"
@@ -227,63 +272,66 @@
           Log out
         </button>
       </div>
-    </nav>
-    <div class="trainer-calendar-container">
-      <div class="trainer-guide guide">
+
+      <div class="calendar-guide">
         <p>
           Tất cả giờ được đăng ký của học viên đã được chuyển đổi theo múi giờ
-          <b id="admin-timezone">Adelaide</b> của bạn. Nếu bạn muốn thay đổi múi
-          giờ, vui lòng trở lại tab Admin để cập nhật
+          <b id="admin-timezone" style="color: #2812e3">Adelaide</b> của bạn.
+          Nếu bạn muốn thay đổi múi giờ, vui lòng trở lại tab Admin để cập nhật
         </p>
 
-        <div style="display: flex; padding: 8px 0">
-          <button onclick="toggleScheduleTrainer(this)">Hiện</button>
-          <h4
-            class="title"
-            style="color: #1e00ff; padding: 8px; display: inline"
+        <div class="calendar-select">
+          <input type="date" id="dateInput" value="new Date()" />
+          <button
+            style="margin-left: 16px; width: 150px"
+            onclick="showWeekRange()"
           >
-            Lịch giảng viên
-          </h4>
-          <h5 id="result"></h5>
+            Hiển thị lịch
+          </button>
+        </div>
+        <div class="calendar-select-result">
+          <p>Thời gian: <b id="result"></b></p>
+        </div>
+      </div>
+    </nav>
 
-          <div style="display: flex; align-items: center">
-            <input type="date" id="dateInput" value="new Date()" />
-            <button onclick="showWeekRange()">Hiển thị lịch</button>
+    <div class="calendar-container">
+      <div class="toggle-schedule-trainer">
+        <button id="toggle-trainer-btn" onclick="toggleScheduleTrainer(this)">
+          Hide Trainer
+        </button>
+        <button id="toggle-student-btn" onclick="toggleScheduleStudent(this)">
+          Hide Student
+        </button>
+      </div>
+
+      <div class="trainer-calendar-container">
+        <h4 class="title">Lịch giảng viên</h4>
+        <div class="trainer-calendar-body">
+          <div class="trainer-calendar-table">
+            <table>
+              <thead>
+                <tr id="trainer-table-header">
+                  <th
+                    style="
+                      min-width: 135px;
+                      background: #1e00ff;
+                      color: #ffffff;
+                      z-index: 1;
+                    "
+                  >
+                    Tên
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="trainer-table-body"></tbody>
+            </table>
           </div>
         </div>
       </div>
-      <div class="trainer-calendar-body">
-        <div class="trainer-calendar-table">
-          <table>
-            <thead>
-              <tr id="trainer-table-header">
-                <th
-                  style="
-                    min-width: 135px;
-                    background: #1e00ff;
-                    color: #ffffff;
-                    z-index: 1;
-                  "
-                >
-                  Tên
-                </th>
-              </tr>
-            </thead>
-            <tbody id="trainer-table-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <div class="calendar-container">
-      <div id="register-calendar-guide">
-        <h4 class="title" style="color: #ff9800; padding: 8px 0 0">
-          Lịch học viên
-        </h4>
-      </div>
+      <div class="student-calendar-container">
+        <h4 class="title">Lịch học viên</h4>
 
-      <pre id="error-container" class="error-message"></pre>
-
-      <form id="scheduleForm">
         <div class="table-container">
           <table>
             <thead>
@@ -294,7 +342,7 @@
             <tbody id="table-body"></tbody>
           </table>
         </div>
-      </form>
+      </div>
     </div>
 
     <!-- Thẻ student modal -->
@@ -324,11 +372,6 @@
               </option>
               <option value="Đã gửi link zoom">Đã gửi link zoom</option>
             </select>
-          </div>
-
-          <label for="adminNote">Ghi chú</label>
-          <div class="input-field">
-            <textarea id="adminNote"></textarea>
           </div>
 
           <label>Số khung giờ học trong ngày:</label>

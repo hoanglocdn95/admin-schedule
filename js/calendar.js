@@ -1,4 +1,5 @@
 document.getElementById("admin-timezone").innerText = userInfo.timezone;
+document.getElementById("admin-name").innerText = userInfo.name;
 
 function generateTableBody() {
   let tbody = document.getElementById("table-body");
@@ -8,7 +9,25 @@ function generateTableBody() {
     let tr = document.createElement("tr");
     let td = document.createElement("td");
 
-    td.innerHTML = `${stu.name} <br /> ${stu.timezone}`;
+    td.innerHTML = `${stu.name} 
+      <br/> ${stu.timezone} <br/> <hr/>
+      <label class='adminNote-label'>Ghi chú:</label>
+
+      <div id='adminNote-${index}'>
+        <p class='adminNote-value' id='adminNote-value-${index}'>${
+      stu.adminNote || "---"
+    }</p>
+        <button onclick='editAdminNote(${index})'>Edit Note</button>
+      </div>
+      <div id='adminNote-edit-${index}' style='display: none;'>
+        <textarea id='adminNote-input-${index}' data-index="${index}" value='${
+      stu.adminNote
+    }'></textarea>
+        <button onclick="saveAdminNote(${index})">Save</button>
+        <button onclick="cancelAdminNote(${index})">Cancel</button>
+      </div>
+      `;
+
     td.style = "background: #07bcd0; font-weight: bold; z-index: 1;";
     tr.appendChild(td);
 
@@ -74,7 +93,6 @@ function generateTableBody() {
 
       const saveClassesBtn = document.querySelector("#save-classes-btn");
       const statusElm = document.querySelector("#status");
-      const adminNoteElm = document.querySelector("#adminNote");
 
       const name = this.getAttribute("data-name");
       const email = this.getAttribute("data-email");
@@ -86,13 +104,9 @@ function generateTableBody() {
       document.getElementById("modal-time").innerText = dayOfCurrentWeek[day];
 
       statusElm.value = studentData[index].status || "";
-      adminNoteElm.value = studentData[index].adminNote || "";
 
       statusElm.onchange = function () {
         studentData[index].status = this.value;
-      };
-      adminNoteElm.onchange = function () {
-        studentData[index].adminNote = this.value;
       };
 
       generateSchedule(index, day);
@@ -145,6 +159,59 @@ function generateTableBody() {
   });
 }
 
+function saveAdminNote(index) {
+  const inputAdminNoteElm = document.querySelector(`#adminNote-input-${index}`);
+
+  studentData[index].adminNote = inputAdminNoteElm.value;
+
+  const updatedSchedule = convertStudentData(studentData);
+
+  loadingOverlay.style.display = "flex";
+
+  fetch(ADMIN_API_URL, {
+    redirect: "follow",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    method: "POST",
+    body: JSON.stringify({
+      scheduledData: updatedSchedule,
+      type: "handle_student_schedule",
+      currentEmail: studentData[index].email,
+      indexRow: index,
+      sheetName: getSheetNames(SHEET_TYPE.SCHEDULE),
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      M.toast({ html: "Chú thích đã được lưu!", classes: "green darken-1" });
+      setTimeout(() => {
+        const valueAdminNoteElm = document.querySelector(
+          `#adminNote-value-${index}`
+        );
+        valueAdminNoteElm.innerText = inputAdminNoteElm.value;
+        cancelAdminNote(index);
+      }, 1000);
+    })
+    .catch((error) => {
+      console.error("error:", error);
+    })
+    .finally(() => {
+      loadingOverlay.style.display = "none";
+    });
+}
+
+function editAdminNote(index) {
+  const adminNoteElm = document.querySelector(`#adminNote-${index}`);
+  const adminNoteEditElm = document.querySelector(`#adminNote-edit-${index}`);
+  adminNoteElm.style.display = "none";
+  adminNoteEditElm.style.display = "block";
+}
+
+function cancelAdminNote(index) {
+  const adminNoteElm = document.querySelector(`#adminNote-${index}`);
+  const adminNoteEditElm = document.querySelector(`#adminNote-edit-${index}`);
+  adminNoteElm.style.display = "block";
+  adminNoteEditElm.style.display = "none";
+}
 function handleClassesTimeChange(inputEl, index, day, indexTime, position) {
   let value = inputEl.value;
   const [hour, minute] = value.split(":").map(Number);
@@ -237,10 +304,25 @@ function generateRegisterClass(index, day) {
                     })
                     .join("")}
                 </select>
+                <button 
+                  data-index="${index}"
+                  data-day="${day}"
+                  data-classIndex="${i}"
+                  onclick="deleteClass(${index}, ${day}, ${i})"
+                >Delete</button>
               </div>
             `;
     registerClassContainer.innerHTML += settingSession;
   });
+}
+
+function deleteClass(index, day, indexClass) {
+  const temp = studentData[index].classes[day];
+  const classesTmp = temp.filter((_, i) => i !== +indexClass);
+  studentData[index].classes[day] = classesTmp;
+  const sessionQuantity = document.querySelector(".session-quantity");
+  sessionQuantity.value = classesTmp.length + "";
+  generateRegisterClass(index, day);
 }
 
 function deleteTime(index, day, indexTime) {
@@ -400,6 +482,14 @@ const closeModal = () => {
 
 const saveClasses = (index, day) => {
   const schedule = studentData[index].classes?.[day] || [];
+
+  if (studentData[index].times[day].length === 0) {
+    M.toast({
+      html: "Học viên cần đăng ký giờ rảnh trước khi được xếp lịch học!",
+      classes: "red",
+    });
+    return;
+  }
 
   if (schedule.length === 0) {
     M.toast({
@@ -633,26 +723,4 @@ const getScheduleBySheetName = async () => {
     .catch((error) => {
       console.error("Lỗi khi lấy dữ liệu:", error);
     });
-};
-
-const showWeekRange = () => {
-  const dateStr = document.getElementById("dateInput").value;
-  if (!dateStr) return;
-
-  selectedDate = new Date(dateStr);
-  const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, ...
-
-  const monday = new Date(selectedDate);
-  monday.setDate(
-    selectedDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
-  );
-
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-
-  const fromDate = formatDate(monday);
-  const toDate = formatDate(sunday);
-
-  document.getElementById("result").textContent = `${fromDate} - ${toDate}`;
-  initCalendar(fromDate, toDate);
 };
