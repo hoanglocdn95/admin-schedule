@@ -59,6 +59,21 @@
         position: sticky;
         left: 0;
       }
+      #table-body tr > td:nth-child(2) {
+        position: sticky;
+        left: 200px;
+        background: #85d28f;
+        font-weight: bold;
+        z-index: 1;
+      }
+      #table-body tr > td:nth-child(3) {
+        position: sticky;
+        left: 350px;
+        background: #f6b900;
+        font-weight: bold;
+        z-index: 1;
+      }
+
       tr td {
         background: #fff;
       }
@@ -103,6 +118,12 @@
         z-index: 1;
       }
 
+      .th-day-150 {
+        width: 150px;
+        min-width: 150px;
+        max-width: 150px;
+      }
+
       .trainer-calendar-table,
       .table-container {
         width: calc(100% - 16px);
@@ -122,7 +143,7 @@
       .calendar-guide > p {
         font-size: 16px;
         line-height: 20px;
-        color: #ff9800;
+        color: #000;
         min-width: 370px;
         max-width: 500px;
       }
@@ -238,10 +259,28 @@
       .adminNote-value {
         color: "#ff9700";
       }
+      #toggle-header-nav {
+        position: fixed;
+        top: 5px;
+        left: calc(50% - 50px);
+        background-color: #1e5ebb;
+        color: #ffffff;
+        border-radius: 4px;
+        z-index: 11;
+        padding: 4px 8px;
+        cursor: pointer;
+        width: 120px;
+      }
+      #toggle-header-nav:hover {
+        color: #ff9700;
+      }
     </style>
   </head>
   <body>
-    <nav class="nav-bar" style="background-color: #ff9800">
+    <button id="toggle-header-nav" onclick="toggleHeaderNav(this)">
+      Hide Header
+    </button>
+    <nav class="nav-bar" style="background-color: #ff9800" id="header-nav">
       <div
         class="nav-wrapper"
         style="
@@ -259,9 +298,9 @@
             <a>Calendar</a>
           </li>
         </ul>
-        <div style="display: flex; align-items: center">
-          <h5 style="margin-right: 8px; color: #07bdd0">Xin chào</h5>
-          <h5 id="admin-name"></h5>
+        <div style="display: flex; align-items: center; padding-top: 28px">
+          <h5 style="margin-right: 8px; color: #1e5ebb">Xin chào</h5>
+          <h5 id="admin-name" style="color: #000000; font-weight: bold"></h5>
         </div>
 
         <button
@@ -362,17 +401,6 @@
             <button id="save-schedule-btn">Save</button>
           </div>
           <hr />
-
-          <label for="status">Trạng thái</label>
-          <div class="input-field" style="width: fit-content">
-            <select id="status" class="browser-default">
-              <option value="Chờ xác nhận lịch rảnh">Chờ lịch rảnh</option>
-              <option value="Chờ xác nhận lịch học">
-                Chờ xác nhận lịch học
-              </option>
-              <option value="Đã gửi link zoom">Đã gửi link zoom</option>
-            </select>
-          </div>
 
           <label>Số khung giờ học trong ngày:</label>
           <select

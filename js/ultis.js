@@ -15,6 +15,8 @@ const SHEET_TYPE = {
   STUDENT: "STUDENT",
 };
 
+const days = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"];
+
 let studentData = [];
 let trainerData = [];
 
@@ -140,6 +142,31 @@ function toggleScheduleStudent(btn) {
     } else {
       studentCalendarContainer.style.width = "100%";
     }
+  }
+}
+
+function toggleHeaderNav(btn) {
+  const headerNav = document.getElementById("header-nav");
+  const calendarContainer = document.querySelector(".calendar-container");
+  const trainerCalendarContainer = document.querySelector(
+    ".trainer-calendar-container"
+  );
+  const studentCalendarContainer = document.querySelector(
+    ".student-calendar-container"
+  );
+
+  if (headerNav.style.display === "none") {
+    headerNav.style.display = "block";
+    btn.innerText = "Hide Header";
+    calendarContainer.style.marginTop = "156px";
+    trainerCalendarContainer.style.height = "calc(100vh - 226px)";
+    studentCalendarContainer.style.height = "calc(100vh - 226px)";
+  } else {
+    headerNav.style.display = "none";
+    btn.innerText = "Show Header";
+    calendarContainer.style.marginTop = "16px";
+    trainerCalendarContainer.style.height = "calc(100vh - 86px)";
+    studentCalendarContainer.style.height = "calc(100vh - 86px)";
   }
 }
 
@@ -351,6 +378,13 @@ function getSheetNames(sheetType) {
 
 const handleStudentData = () => {
   studentData = studentData.map((s, index) => {
+    let status = "";
+    let adminNote = "";
+    if (scheduleSheetData[index]) {
+      status = scheduleSheetData[index][5] || "";
+      adminNote = scheduleSheetData[index][6] || "";
+    }
+
     if (studentCalendar[s.email]) {
       const scheduleCalendar =
         scheduleSheetData.length > 0 && scheduleSheetData[index]
@@ -361,14 +395,8 @@ const handleStudentData = () => {
               .fill(null)
               .map(() => []);
 
-      let status = "";
-      let adminNote = "";
-      if (scheduleSheetData[index]) {
-        status = scheduleSheetData[index][5] || "";
-        adminNote = scheduleSheetData[index][6] || "";
-      }
-
       studentCalendar[s.email] = { ...studentCalendar[s.email], ...s };
+
       return {
         ...s,
         times: studentCalendar[s.email].times.map((day) =>
@@ -387,6 +415,7 @@ const handleStudentData = () => {
         adminNote,
       };
     }
+
     return {
       ...s,
       times: Array(7)
@@ -395,8 +424,8 @@ const handleStudentData = () => {
       classes: Array(7)
         .fill(null)
         .map(() => []),
-      status: "",
-      adminNote: "",
+      status,
+      adminNote,
     };
   });
 };
@@ -435,17 +464,7 @@ function formatDateToString(date) {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-function generateHeaders() {
-  const days = [
-    "Thứ 2",
-    "Thứ 3",
-    "Thứ 4",
-    "Thứ 5",
-    "Thứ 6",
-    "Thứ 7",
-    "Chủ nhật",
-  ];
-
+function generateStudentHeaders() {
   let dayOfWeek = selectedDate.getDay();
   let monday = new Date(selectedDate);
   monday.setDate(
@@ -460,17 +479,18 @@ function generateHeaders() {
   }
 
   let headerRow = document.getElementById("table-header");
-  let trainerHeaderRow = document.getElementById("trainer-table-header");
 
-  headerRow.innerHTML = `<th style="min-width: 135px; background: #07bcd0; z-index: 2; position:sticky; top: 0; left: 0">Tên</th>`;
-  trainerHeaderRow.innerHTML = `
-    <th style="min-width: 135px; background: #1e00ff; color: #ffffff; z-index: 2; position:sticky; top: 0; left: 0;">Tên</th>
+  // Cột đầu tiên: Tên học viên
+  headerRow.innerHTML = `
+    <th style="background: #07bcd0; z-index: 2;" class="th-day">Tên</th>
+    <th style="background: #85d28f; z-index: 2; position: sticky; left: 200px;" class="th-day th-day-150">Trạng thái</th>
+    <th style="background: #f6b900; z-index: 2; position: sticky; left: 350px;" class="th-day th-day-150">Ghi chú</th>
   `;
-  dayOfCurrentWeek.length = 0; // Clear global if used
+
+  dayOfCurrentWeek.length = 0; // Reset global
 
   weekDates.forEach((date, i) => {
     let th = document.createElement("th");
-    let thTrainer = document.createElement("th");
 
     const dayText = `${days[i]} (${date})`;
     dayOfCurrentWeek.push(dayText);
@@ -478,6 +498,31 @@ function generateHeaders() {
     th.textContent = dayText;
     th.className = "th-day";
     headerRow.appendChild(th);
+  });
+}
+
+function generateTrainerHeaders() {
+  let dayOfWeek = selectedDate.getDay();
+  let monday = new Date(selectedDate);
+  monday.setDate(
+    selectedDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
+  );
+
+  let weekDates = [];
+  for (let i = 0; i < 7; i++) {
+    let d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    weekDates.push(formatDateToString(d)); // dd/MM/yyyy
+  }
+
+  let trainerHeaderRow = document.getElementById("trainer-table-header");
+
+  trainerHeaderRow.innerHTML = `<th style="background: #07bcd0; z-index: 2;" class="th-day">Tên</th>`;
+
+  weekDates.forEach((date, i) => {
+    let thTrainer = document.createElement("th");
+
+    const dayText = `${days[i]} (${date})`;
 
     thTrainer.textContent = dayText;
     thTrainer.className = "th-day";

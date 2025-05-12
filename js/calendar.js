@@ -7,43 +7,73 @@ function generateTableBody() {
 
   studentData.forEach((stu, index) => {
     let tr = document.createElement("tr");
-    let td = document.createElement("td");
 
-    td.innerHTML = `${stu.name} 
-      <br/> ${stu.timezone} <br/> <hr/>
-      <label class='adminNote-label'>Ghi chú:</label>
+    // --- Cột 1: Tên + timezone
+    const nameTd = document.createElement("td");
+    nameTd.innerHTML = `${stu.name}<br/>${stu.timezone}`;
+    nameTd.style = "background: #07bcd0; font-weight: bold; z-index: 1;";
+    tr.appendChild(nameTd);
 
+    // --- Cột 2: Status
+    const statusTd = document.createElement("td");
+
+    statusTd.innerHTML = `
+      <div id='status-${index}'>
+        <select 
+          id="status-${index}" 
+          class="browser-default" 
+          onchange="changeStatus(this, ${index})"
+        >
+          <option value="Chờ lịch rảnh" 
+            ${stu.status === "Chờ lịch rảnh" ? "selected" : ""}
+         >Chờ lịch rảnh</option>
+          <option value="Chờ xác nhận lịch học" 
+            ${stu.status === "Chờ xác nhận lịch học" ? "selected" : ""}
+          >Chờ xác nhận lịch học</option>
+          <option value="Đã gửi link zoom" ${
+            stu.status === "Đã gửi link zoom" ? "selected" : ""
+          } >Đã gửi link zoom</option>
+        </select>
+      </div>
+    `;
+
+    tr.appendChild(statusTd);
+
+    // --- Cột 3: Admin Note (view-only + button chỉnh sửa)
+    const noteTd = document.createElement("td");
+    noteTd.innerHTML = `
       <div id='adminNote-${index}'>
         <p class='adminNote-value' id='adminNote-value-${index}'>${
       stu.adminNote || "---"
     }</p>
+        <hr />
         <button onclick='editAdminNote(${index})'>Edit Note</button>
       </div>
       <div id='adminNote-edit-${index}' style='display: none;'>
-        <textarea id='adminNote-input-${index}' data-index="${index}" value='${
-      stu.adminNote
-    }'></textarea>
+        <textarea id='adminNote-input-${index}' data-index="${index}">${
+      stu.adminNote || ""
+    }</textarea>
+        <hr />
         <button onclick="saveAdminNote(${index})">Save</button>
         <button onclick="cancelAdminNote(${index})">Cancel</button>
-      </div>
-      `;
+      </div>`;
+    tr.appendChild(noteTd);
 
-    td.style = "background: #07bcd0; font-weight: bold; z-index: 1;";
-    tr.appendChild(td);
-
+    // --- Cột 4~10: các ngày trong tuần
     for (let i = 0; i <= 6; i++) {
-      let tdInput = document.createElement("td");
+      const tdInput = document.createElement("td");
       tdInput.style.padding = 0;
-      const timesString = stu.times.length > 0 ? stu.times[i].join(", ") : "";
-      const classesString = stu.classes
-        ? stu.classes[i]
-            .map((classItem, i) => {
-              return `
-          <p style="background-color: ${classItem.color}; color: white; padding: 2px; border-radius: 5px;">${classItem.time} - ${classItem.trainerName}</p>
-        `;
-            })
-            .join("")
-        : "";
+
+      const timesString = stu.times?.[i]?.join(", ") || "";
+      const classesString =
+        stu.classes?.[i]
+          ?.map(
+            (classItem) => `
+            <p style="background-color: ${classItem.color}; color: white; padding: 2px; border-radius: 5px;">
+              ${classItem.time} - ${classItem.trainerName}
+            </p>`
+          )
+          .join("") || "";
 
       const htmlContent = timesString
         ? `
@@ -58,105 +88,122 @@ function generateTableBody() {
           <hr />
           <h6>Lịch học</h6>
           ${classesString}
-        </div>
-      `
-        : `
-        <div class="student-cell"
-            data-email="${stu.email}"
-            data-day="${i}"
-            data-name="${stu.name}"
-            data-index="${index}"
-        >
-          <p>---</p>
-        </div>
-      `;
+        </div>`
+        : `<div class="student-cell"
+              data-email="${stu.email}"
+              data-day="${i}"
+              data-name="${stu.name}"
+              data-index="${index}"
+          ><p>---</p></div>`;
 
       tdInput.innerHTML = htmlContent;
-
       tr.appendChild(tdInput);
     }
 
     tbody.appendChild(tr);
   });
 
-  // Khởi tạo modal của Materialize
+  // Khởi tạo modal + sự kiện click
   M.Modal.init(document.querySelectorAll(".modal"));
 
-  // Lắng nghe sự kiện click vào các phần tử có class student-cell
   document.querySelectorAll(".student-cell").forEach((cell) => {
     cell.onclick = function () {
       const editScheduleBtn = document.querySelector("#edit-schedule-btn");
       editScheduleBtn.innerText = "Edit";
+      document.querySelector("#save-schedule-btn").style.visibility = "hidden";
 
-      const saveScheduleBtn = document.querySelector("#save-schedule-btn");
-      saveScheduleBtn.style.visibility = "hidden";
-
-      const saveClassesBtn = document.querySelector("#save-classes-btn");
-      const statusElm = document.querySelector("#status");
-
-      const name = this.getAttribute("data-name");
-      const email = this.getAttribute("data-email");
-      const day = this.getAttribute("data-day");
-      const index = this.getAttribute("data-index");
+      const name = this.dataset.name;
+      const email = this.dataset.email;
+      const day = this.dataset.day;
+      const index = +this.dataset.index;
 
       document.getElementById("modal-name").innerText = name;
       document.getElementById("modal-email").innerText = email;
-      document.getElementById("modal-time").innerText = dayOfCurrentWeek[day];
-
-      statusElm.value = studentData[index].status || "";
-
-      statusElm.onchange = function () {
-        studentData[index].status = this.value;
-      };
+      document.getElementById("modal-time").innerText =
+        dayOfCurrentWeek[day] || "";
 
       generateSchedule(index, day);
+      generateRegisterClass(index, day);
 
-      editScheduleBtn.onclick = function () {
-        if (this.innerText === "Edit") {
+      editScheduleBtn.onclick = () => {
+        if (editScheduleBtn.innerText === "Edit") {
           generateScheduleEdit(index, day);
-          saveScheduleBtn.style.visibility = "unset";
-          this.innerText = "Add";
+          document.querySelector("#save-schedule-btn").style.visibility =
+            "unset";
+          editScheduleBtn.innerText = "Add";
         } else {
           addSchedule(index, day);
         }
       };
 
-      saveScheduleBtn.onclick = function () {
+      document.querySelector("#save-schedule-btn").onclick = () =>
         saveStudentSchedule(index, day);
-      };
-
-      saveClassesBtn.onclick = function () {
+      document.querySelector("#save-classes-btn").onclick = () =>
         saveClasses(index, day);
-      };
-
-      generateRegisterClass(index, day);
 
       const sessionQuantity = document.querySelector(".session-quantity");
-
       sessionQuantity.value =
-        studentData[index].classes && studentData[index].classes.length > 0
-          ? studentData[index].classes[day].length + ""
-          : "0";
+        studentData[index].classes?.[day]?.length?.toString() || "0";
 
-      sessionQuantity.addEventListener("change", function () {
-        const currentClasses = studentData[index].classes[day];
-        const tmp = Array(+this.value)
+      sessionQuantity.onchange = function () {
+        const currentClasses = studentData[index].classes?.[day] || [];
+        const count = +this.value;
+
+        studentData[index].classes[day] = Array(count)
           .fill(null)
-          .map((_, i) => {
-            if (currentClasses[i]) {
-              return { ...currentClasses[i] };
-            }
-            return { time: "", trainerName: "", color: "", trainerEmail: "" };
-          });
-
-        studentData[index].classes[day] = [...tmp];
+          .map((_, i) =>
+            currentClasses[i]
+              ? { ...currentClasses[i] }
+              : { time: "", trainerName: "", color: "", trainerEmail: "" }
+          );
 
         generateRegisterClass(index, day);
-      });
+      };
 
       M.Modal.getInstance(document.getElementById("studentModal")).open();
     };
   });
+}
+
+function changeStatus(elm, index) {
+  console.log(" changeStatus ~ elm:", elm.value);
+  const statusElm = document.querySelector(`#status-${index}`);
+  studentData[index].status = elm.value;
+
+  const updatedSchedule = convertStudentData(studentData);
+
+  loadingOverlay.style.display = "flex";
+
+  fetch(ADMIN_API_URL, {
+    redirect: "follow",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    method: "POST",
+    body: JSON.stringify({
+      scheduledData: updatedSchedule,
+      type: "handle_student_schedule",
+      currentEmail: studentData[index].email,
+      indexRow: index,
+      sheetName: getSheetNames(SHEET_TYPE.SCHEDULE),
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      M.toast({
+        html: "Trạng thái đã được cập nhật!",
+        classes: "green darken-1",
+      });
+    })
+    .catch((error) => {
+      console.error("error:", error);
+      M.toast({
+        html: "Lỗi 414: Không thể cập nhật trạng thái!",
+        classes: "red",
+      });
+      statusElm.value = "";
+    })
+    .finally(() => {
+      loadingOverlay.style.display = "none";
+    });
 }
 
 function saveAdminNote(index) {
@@ -452,7 +499,9 @@ const initCalendar = async () => {
   handleStudentData();
   handleTrainerData();
 
-  generateHeaders();
+  generateStudentHeaders();
+  generateTrainerHeaders();
+
   generateTableBody();
 
   generateTrainerTableBody();
