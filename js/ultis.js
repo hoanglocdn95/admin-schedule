@@ -224,9 +224,7 @@ function parseSchedule(allData) {
 }
 
 const getCalendarByType = async (type) => {
-  console.log(" getCalendarByType ~ type:", type);
   const currentSheetName = getSheetNames(type);
-  console.log(" getCalendarByType ~ currentSheetName:", currentSheetName);
   try {
     const response = await fetch(
       `${SCHEDULE_API_URL}?type=get_calendar&sheetName=${currentSheetName}`,

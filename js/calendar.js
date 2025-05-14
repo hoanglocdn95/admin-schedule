@@ -533,14 +533,6 @@ const saveClasses = (index, day) => {
     return;
   }
 
-  if (schedule.length === 0) {
-    M.toast({
-      html: "Không có lớp nào được đăng ký!",
-      classes: "red",
-    });
-    return;
-  }
-
   const isInvalid = schedule.some((entry) => {
     if (!entry.time || !entry.trainerEmail) return true;
 

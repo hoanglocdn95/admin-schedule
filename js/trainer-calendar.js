@@ -227,7 +227,7 @@ function saveTrainerSchedule(index, day) {
       .then((response) => response.json())
       .then((data) => {
         M.toast({
-          html: `Lịch rảnh của ${name} đã được lưu!`,
+          html: `Lịch rảnh của ${name} đã  được lưu!`,
           classes: "green darken-1",
         });
 
