@@ -1,5 +1,5 @@
 const SCHEDULE_API_URL =
-  "https://script.google.com/macros/s/AKfycbxpKKS1fHni-dmEpXyGLCreE43qBxJpPiKXHJONLXn2N0vLGwjGNhzbY_ODBIolR4ePvA/exec";
+  "https://script.google.com/macros/s/AKfycbx-9-NGKQT1BPE30EoY_s2bauw1OWfIMxX_cGMBPGDBPCvBPwLB4FfQE5yzjEJ3cqltEw/exec";
 
 const ACCOUNT_API_URL =
   "https://script.google.com/macros/s/AKfycbxa7-dhPgo48Q3eVKnQjQNKI8oi4ykDfnTzi9hQDSfhGk2SrMBimc1yagzxXLULNs7tYQ/exec";
@@ -72,7 +72,7 @@ function logout() {
 function addUserInfoToSchedule(scheduleData, email, name, timezone) {
   return scheduleData.map((row) =>
     row.map((cell) => {
-      if (cell.trim() !== "") {
+      if (cell && cell.trim() !== "") {
         const times = cell.split(",").join(", ");
         return `${name} - ${timezone} - ${email} (${times})`;
       }
@@ -171,21 +171,20 @@ function toggleHeaderNav(btn) {
 }
 
 const getAllUser = async () => {
-  await fetch(`${ACCOUNT_API_URL}?type=get_all_user`, {
-    method: "GET",
-    redirect: "follow",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-  })
-    .then(async (response) => {
-      const data = await response.json();
-      if (data.success) {
-        if (data.student) studentData = data.student;
-        if (data.trainer) trainerData = data.trainer;
-      }
-    })
-    .catch((error) => {
-      console.error("Lỗi khi lấy dữ liệu:", error);
+  try {
+    const response = await fetch(`${ACCOUNT_API_URL}?type=get_all_user`, {
+      method: "GET",
+      redirect: "follow",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
     });
+    const data = await response.json();
+    if (data.success) {
+      if (data.student) studentData = data.student;
+      if (data.trainer) trainerData = data.trainer;
+    }
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+  }
 };
 
 function parseSchedule(allData) {
@@ -225,9 +224,12 @@ function parseSchedule(allData) {
 }
 
 const getCalendarByType = async (type) => {
+  console.log(" getCalendarByType ~ type:", type);
+  const currentSheetName = getSheetNames(type);
+  console.log(" getCalendarByType ~ currentSheetName:", currentSheetName);
   try {
     const response = await fetch(
-      `${SCHEDULE_API_URL}?type=get_calendar&sheetName=${getSheetNames(type)}`,
+      `${SCHEDULE_API_URL}?type=get_calendar&sheetName=${currentSheetName}`,
       {
         redirect: "follow",
         method: "GET",
@@ -267,10 +269,10 @@ function generateSchedule(index, day) {
 }
 
 function extractOffset(timezoneStr) {
-  var match = timezoneStr.match(/\(GMT ([+-]\d{1,2}):(\d{2})\)/);
+  const match = timezoneStr.match(/\(GMT ([+-]\d{1,2}):(\d{2})\)/);
   if (!match) throw new Error("Invalid timezone format: " + timezoneStr);
-  var hours = parseInt(match[1], 10);
-  var minutes = parseInt(match[2], 10);
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
   return hours + minutes / 60;
 }
 
@@ -278,12 +280,12 @@ function convertTimeRange(timeRange, offsetDiff) {
   return timeRange
     .split("-")
     .map((time) => {
-      var [hh, mm] = time.split(":").map(Number);
-      var totalMinutes = hh * 60 + mm + offsetDiff * 60;
+      const [hh, mm] = time.split(":").map(Number);
+      let totalMinutes = hh * 60 + mm + offsetDiff * 60;
       if (totalMinutes < 0) totalMinutes += 1440; // Điều chỉnh nếu âm
       if (totalMinutes >= 1440) totalMinutes -= 1440; // Điều chỉnh nếu quá 24h
-      var newHh = Math.floor(totalMinutes / 60);
-      var newMm = totalMinutes % 60;
+      const newHh = Math.floor(totalMinutes / 60);
+      const newMm = totalMinutes % 60;
       return `${String(newHh).padStart(2, "0")}:${String(newMm).padStart(
         2,
         "0"
@@ -293,9 +295,9 @@ function convertTimeRange(timeRange, offsetDiff) {
 }
 
 function convertWeeklyTimes(times, originTimezone, targetTimezone) {
-  var originOffset = extractOffset(originTimezone);
-  var targetOffset = extractOffset(targetTimezone);
-  var offsetDiff = targetOffset - originOffset;
+  const originOffset = extractOffset(originTimezone);
+  const targetOffset = extractOffset(targetTimezone);
+  const offsetDiff = targetOffset - originOffset;
 
   return times.map((day) =>
     day.map((timeRange) => convertTimeRange(timeRange, offsetDiff))
@@ -371,9 +373,12 @@ function getSheetNames(sheetType) {
   const sundayWeek = new Date(mondayWeek);
   sundayWeek.setDate(mondayWeek.getDate() + 6);
 
-  return `${SHEET_TYPE[sheetType]}:${formatDate(mondayWeek)} - ${formatDate(
+  const sn = `${SHEET_TYPE[sheetType]}:${formatDate(mondayWeek)} - ${formatDate(
     sundayWeek
   )}`;
+  console.log(" sn ~ sn:", sn);
+
+  return sn;
 }
 
 const handleStudentData = () => {
@@ -533,9 +538,11 @@ function generateTrainerHeaders() {
 
 const showWeekRange = () => {
   const dateStr = document.getElementById("dateInput").value;
+  console.log(" showWeekRange ~ dateStr:", dateStr);
   if (!dateStr) return;
 
   selectedDate = new Date(dateStr);
+  console.log(" showWeekRange ~ selectedDate:", selectedDate);
   const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, ...
 
   const monday = new Date(selectedDate);
@@ -548,6 +555,7 @@ const showWeekRange = () => {
 
   const fromDate = formatDate(monday);
   const toDate = formatDate(sunday);
+  console.log(" showWeekRange ~ fromDate:", { fromDate, toDate });
 
   document.getElementById("result").textContent = `${fromDate} - ${toDate}`;
   initCalendar(fromDate, toDate);

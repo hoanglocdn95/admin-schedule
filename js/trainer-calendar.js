@@ -221,6 +221,7 @@ function saveTrainerSchedule(index, day) {
         timezone,
         type: "handle_trainer_calendar",
         currentEmail: email,
+        sheetName: getSheetNames(SHEET_TYPE.TRAINER),
       }),
     })
       .then((response) => response.json())

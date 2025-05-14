@@ -110,7 +110,8 @@ function generateTableBody() {
     cell.onclick = function () {
       const editScheduleBtn = document.querySelector("#edit-schedule-btn");
       editScheduleBtn.innerText = "Edit";
-      document.querySelector("#save-schedule-btn").style.visibility = "hidden";
+      const saveScheduleBtn = document.querySelector("#save-schedule-btn");
+      saveScheduleBtn.style.visibility = "hidden";
 
       const name = this.dataset.name;
       const email = this.dataset.email;
@@ -128,16 +129,14 @@ function generateTableBody() {
       editScheduleBtn.onclick = () => {
         if (editScheduleBtn.innerText === "Edit") {
           generateScheduleEdit(index, day);
-          document.querySelector("#save-schedule-btn").style.visibility =
-            "unset";
+          saveScheduleBtn.style.visibility = "unset";
           editScheduleBtn.innerText = "Add";
         } else {
           addSchedule(index, day);
         }
       };
 
-      document.querySelector("#save-schedule-btn").onclick = () =>
-        saveStudentSchedule(index, day);
+      saveScheduleBtn.onclick = () => saveStudentSchedule(index, day);
       document.querySelector("#save-classes-btn").onclick = () =>
         saveClasses(index, day);
 
@@ -510,19 +509,13 @@ const initCalendar = async () => {
 };
 
 document.addEventListener("DOMContentLoaded", function () {
-  const loadingOverlay = document.getElementById("loadingOverlay");
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
 
-  function getTodayISODate() {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-  document.getElementById("dateInput").value = getTodayISODate();
+  document.getElementById("dateInput").value = `${yyyy}-${mm}-${dd}`;
   showWeekRange();
-  initCalendar();
 });
 
 const closeModal = () => {
@@ -620,6 +613,7 @@ function saveStudentSchedule(index, day) {
         timezone,
         type: "handle_student_calendar",
         currentEmail: email,
+        sheetName: getSheetNames(SHEET_TYPE.STUDENT),
       }),
     })
       .then((response) => response.json())
@@ -756,6 +750,7 @@ function convertStudentData(studentData) {
 
 const getScheduleBySheetName = async () => {
   const sName = getSheetNames(SHEET_TYPE.SCHEDULE);
+  console.log(" getScheduleBySheetName ~ sName:", sName);
   await fetch(`${ADMIN_API_URL}?type=get_schedule_by_name&sheetName=${sName}`, {
     method: "GET",
     redirect: "follow",
@@ -764,6 +759,7 @@ const getScheduleBySheetName = async () => {
     .then(async (response) => {
       const json = await response.json();
       const { data, success, message } = JSON.parse(json.message);
+      console.log(" .then ~ data:", data);
       if (success) scheduleSheetData = data;
       else {
         M.toast({ html: message, classes: "blue darken-1" });
