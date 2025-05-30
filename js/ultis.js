@@ -383,7 +383,25 @@ function extractCityName(timezoneString) {
   if (match) {
     return match[1].trim();
   }
-  return null;
+  return "";
+}
+
+function shortenName(fullName) {
+  if (!fullName || typeof fullName !== "string") return "";
+
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length <= 2) {
+    return fullName;
+  }
+
+  const first = parts[0];
+  const last = parts[parts.length - 1];
+  const middleInitials = parts
+    .slice(1, -1)
+    .map((part) => part[0] + ".")
+    .join("");
+
+  return `${first} ${middleInitials}${last}`;
 }
 
 const handleStudentData = () => {

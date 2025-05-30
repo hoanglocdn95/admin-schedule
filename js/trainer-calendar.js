@@ -113,7 +113,9 @@ function generateTrainerTableBody() {
     let tr = document.createElement("tr");
     let td = document.createElement("td");
 
-    td.innerHTML = `${tra.name} - ${extractCityName(tra.timezone)}`;
+    td.innerHTML = `${shortenName(tra.name)} - ${extractCityName(
+      tra.timezone
+    )}`;
     td.style = "background: #07bcd0; font-weight: bold; z-index: 1;";
     tr.appendChild(td);
 

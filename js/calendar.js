@@ -10,7 +10,9 @@ function generateTableBody() {
 
     // --- Cột 1: Tên + timezone
     const nameTd = document.createElement("td");
-    nameTd.innerHTML = `${stu.name} - ${extractCityName(stu.timezone)}`;
+    nameTd.innerHTML = `${shortenName(stu.name)} - ${extractCityName(
+      stu.timezone
+    )}`;
     nameTd.style = `background: #07bcd0;
       font-weight: bold;
       z-index: 1; 
@@ -72,8 +74,10 @@ function generateTableBody() {
         stu.classes?.[i]
           ?.map(
             (classItem) => `
-            <p style="background-color: ${classItem.color}; color: white; padding: 2px; border-radius: 5px;">
-              ${classItem.time} - ${classItem.trainerName}
+            <p style="background-color: ${
+              classItem.color
+            }; color: white; padding: 2px; border-radius: 5px;">
+              ${classItem.time} - ${shortenName(classItem.trainerName)}
             </p>`
           )
           .join("") || "";
