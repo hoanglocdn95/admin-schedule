@@ -314,7 +314,7 @@ function parseTimeTrainerString(input, studentTimezone) {
   const lines = input.split("\n");
   const result = [];
 
-  lines.forEach((line) => {
+  lines.forEach((line, index) => {
     const match = line.match(/^(.+?)\s*\((.+)-(.+@.+)\)$/);
 
     if (match) {
@@ -334,7 +334,7 @@ function parseTimeTrainerString(input, studentTimezone) {
         color,
       });
     } else {
-      console.warn("Không đúng định dạng:", line);
+      console.warn("Không đúng định dạng:", { line });
     }
   });
 
@@ -374,9 +374,16 @@ function getSheetNames(sheetType) {
   const sn = `${SHEET_TYPE[sheetType]}:${formatDate(mondayWeek)} - ${formatDate(
     sundayWeek
   )}`;
-  console.log(" sn ~ sn:", sn);
 
   return sn;
+}
+
+function extractCityName(timezoneString) {
+  const match = timezoneString.match(/\)\s*(.+)$/);
+  if (match) {
+    return match[1].trim();
+  }
+  return null;
 }
 
 const handleStudentData = () => {
@@ -536,11 +543,9 @@ function generateTrainerHeaders() {
 
 const showWeekRange = () => {
   const dateStr = document.getElementById("dateInput").value;
-  console.log(" showWeekRange ~ dateStr:", dateStr);
   if (!dateStr) return;
 
   selectedDate = new Date(dateStr);
-  console.log(" showWeekRange ~ selectedDate:", selectedDate);
   const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, ...
 
   const monday = new Date(selectedDate);
@@ -553,7 +558,6 @@ const showWeekRange = () => {
 
   const fromDate = formatDate(monday);
   const toDate = formatDate(sunday);
-  console.log(" showWeekRange ~ fromDate:", { fromDate, toDate });
 
   document.getElementById("result").textContent = `${fromDate} - ${toDate}`;
   initCalendar(fromDate, toDate);

@@ -10,8 +10,12 @@ function generateTableBody() {
 
     // --- Cột 1: Tên + timezone
     const nameTd = document.createElement("td");
-    nameTd.innerHTML = `${stu.name}<br/>${stu.timezone}`;
-    nameTd.style = "background: #07bcd0; font-weight: bold; z-index: 1;";
+    nameTd.innerHTML = `${stu.name} - ${extractCityName(stu.timezone)}`;
+    nameTd.style = `background: #07bcd0;
+      font-weight: bold;
+      z-index: 1; 
+      max-width: 200px;
+      `;
     tr.appendChild(nameTd);
 
     // --- Cột 2: Status
@@ -21,7 +25,7 @@ function generateTableBody() {
       <div id='status-${index}'>
         <select 
           id="status-${index}" 
-          class="browser-default" 
+          class="browser-default status-select" 
           onchange="changeStatus(this, ${index})"
         >
           <option value="Chờ lịch rảnh" 
@@ -43,11 +47,10 @@ function generateTableBody() {
     const noteTd = document.createElement("td");
     noteTd.innerHTML = `
       <div id='adminNote-${index}'>
-        <p class='adminNote-value' id='adminNote-value-${index}'>${
-      stu.adminNote || "---"
-    }</p>
-        <hr />
-        <button onclick='editAdminNote(${index})'>Edit Note</button>
+        <p class='adminNote-value' id='adminNote-value-${index}' onclick='editAdminNote(${index})' 
+        ${stu.adminNote ? "" : "style='color: #ffffff'"}
+        >${stu.adminNote || "click vào để edit"}</p>
+       
       </div>
       <div id='adminNote-edit-${index}' style='display: none;'>
         <textarea id='adminNote-input-${index}' data-index="${index}">${
@@ -75,26 +78,19 @@ function generateTableBody() {
           )
           .join("") || "";
 
-      const htmlContent = timesString
-        ? `
+      const htmlContent = `
         <div class="student-cell"
             data-email="${stu.email}"
             data-day="${i}"
             data-name="${stu.name}"
             data-index="${index}"
         >
-          <h6>Thời gian rảnh:</h6>
-          <p>${timesString}</p>
-          <hr />
-          <h6>Lịch học</h6>
-          ${classesString}
-        </div>`
-        : `<div class="student-cell"
-              data-email="${stu.email}"
-              data-day="${i}"
-              data-name="${stu.name}"
-              data-index="${index}"
-          ><p>---</p></div>`;
+        ${
+          classesString
+            ? classesString
+            : `<p>${timesString ? timesString : "---"}</p>`
+        }
+        </div>`;
 
       tdInput.innerHTML = htmlContent;
       tr.appendChild(tdInput);
@@ -165,7 +161,6 @@ function generateTableBody() {
 }
 
 function changeStatus(elm, index) {
-  console.log(" changeStatus ~ elm:", elm.value);
   const statusElm = document.querySelector(`#status-${index}`);
   studentData[index].status = elm.value;
 
@@ -742,7 +737,6 @@ function convertStudentData(studentData) {
 
 const getScheduleBySheetName = async () => {
   const sName = getSheetNames(SHEET_TYPE.SCHEDULE);
-  console.log(" getScheduleBySheetName ~ sName:", sName);
   await fetch(`${ADMIN_API_URL}?type=get_schedule_by_name&sheetName=${sName}`, {
     method: "GET",
     redirect: "follow",
@@ -751,7 +745,6 @@ const getScheduleBySheetName = async () => {
     .then(async (response) => {
       const json = await response.json();
       const { data, success, message } = JSON.parse(json.message);
-      console.log(" .then ~ data:", data);
       if (success) scheduleSheetData = data;
       else {
         M.toast({ html: message, classes: "blue darken-1" });

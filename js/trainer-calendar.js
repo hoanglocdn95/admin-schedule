@@ -113,7 +113,7 @@ function generateTrainerTableBody() {
     let tr = document.createElement("tr");
     let td = document.createElement("td");
 
-    td.innerHTML = `${tra.name} <br /> ${tra.timezone}`;
+    td.innerHTML = `${tra.name} - ${extractCityName(tra.timezone)}`;
     td.style = "background: #07bcd0; font-weight: bold; z-index: 1;";
     tr.appendChild(td);
 
@@ -130,7 +130,6 @@ function generateTrainerTableBody() {
             data-name="${tra.name}"
             data-index="${index}"
         >
-          <h6>Thời gian rảnh:</h6>
           <p>${timesString}</p>
         </div>
       `

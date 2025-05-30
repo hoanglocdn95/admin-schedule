@@ -131,6 +131,7 @@
         overflow: auto;
         border: solid;
         height: 100%;
+        font-size: 13px;
       }
 
       .title {
@@ -258,6 +259,7 @@
       }
       .adminNote-value {
         color: "#ff9700";
+        cursor: pointer;
       }
       #toggle-header-nav {
         position: fixed;
@@ -273,6 +275,9 @@
       }
       #toggle-header-nav:hover {
         color: #ff9700;
+      }
+      .status-select {
+        height: 30px;
       }
     </style>
   </head>
@@ -300,7 +305,7 @@
         </ul>
         <div style="display: flex; align-items: center; padding-top: 28px">
           <h5 style="margin-right: 8px; color: #1e5ebb">Xin chào</h5>
-          <h5 id="admin-name" style="color: #000000; font-weight: bold"></h5>
+          <h5 id="admin-name" style="color: #ffffff; font-weight: bold"></h5>
         </div>
 
         <button
@@ -395,7 +400,6 @@
           <h5 id="modal-email"></h5>
           <hr />
           <div>
-            <h6>Lịch học</h6>
             <div id="modal-schedule"></div>
             <button id="edit-schedule-btn">Edit</button>
             <button id="save-schedule-btn">Save</button>
